@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: ekklesia_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ekklesia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ekklesia}
+      POSTGRES_DB: ${POSTGRES_DB:-ekklesia}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ekklesia}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ekklesia_web
+    env_file:
+      - .env
+    volumes:
+      - ./app:/code/app
+      - ./frontend:/code/frontend
+      - ./storage:/code/storage
+    ports:
+      - "6076:6076"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+    driver: local
+
