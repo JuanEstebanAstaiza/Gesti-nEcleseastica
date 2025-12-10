@@ -21,6 +21,7 @@
 ## Contenedores
 - `db`: PostgreSQL 15.
 - `web`: FastAPI + frontend estático, monta `./storage` para archivos, expuesto en `6076`.
+- Puerto host de Postgres: `55432` (mapea al 5432 del contenedor).
 
 ## Volúmenes y backups
 - `pgdata`: datos persistentes de PostgreSQL. Realizar backups periódicos (`pg_dump`) y almacenar fuera del host.

@@ -28,7 +28,7 @@ docs/          # Documentación adicional
 ```
 
 ## Estado actual
-- Backend con healthcheck, auth (register/login/refresh), `/users/me`, CRUD de usuarios (solo admin), donaciones (crear, mis donaciones, listar todas solo admin), documentos (subir/descargar/listar admin) con validación de tamaño/MIME y checksum, eventos (crear admin, listar público), inscripciones básicas y reporte resumen admin; modelos base (users, donations, documents, events).
+- Backend con healthcheck, auth (register/login/refresh), `/users/me`, CRUD de usuarios (solo admin), donaciones (crear, mis donaciones, listar todas solo admin), documentos (subir/descargar/listar admin) con validación de tamaño/MIME y checksum, eventos (crear admin, listar público), inscripciones con cupo/duplicados/cancelación, reportes (summary, dashboard, export CSV) y WebSocket autenticado de notificaciones; modelos base (users, donations, documents, events).
 - Frontend estático renovado (estilo glassy) con formularios demo y uso de token real tras login.
 - Sin migraciones automáticas; se usan scripts SQL manuales.
 

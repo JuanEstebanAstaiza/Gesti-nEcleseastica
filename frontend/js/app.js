@@ -18,6 +18,7 @@ function notify(message, type = "info") {
 }
 
 let accessToken = null;
+let ws = null;
 
 async function postForm(url, formData, token) {
   const headers = token ? { Authorization: `Bearer ${token}` } : accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
@@ -47,6 +48,8 @@ loginForm?.addEventListener("submit", async (e) => {
     const data = await res.json();
     accessToken = data.access_token;
     notify("Sesión iniciada.");
+    connectWs();
+    loadDashboard();
   } catch (err) {
     notify(err.message, "error");
   }
@@ -67,6 +70,11 @@ donationForm?.addEventListener("submit", async (e) => {
 documentForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const formData = new FormData(documentForm);
+  const file = documentForm.querySelector("input[name='file']") || documentForm.querySelector("input[name='receipt']");
+  if (file?.files?.[0] && file.files[0].size > 10 * 1024 * 1024) {
+    notify("Archivo supera 10MB", "error");
+    return;
+  }
   try {
     await postForm(`${API_BASE}/documents`, formData);
     notify("Documento cargado.");
@@ -145,4 +153,29 @@ async function loadDashboard() {
 }
 
 refreshDashboardBtn?.addEventListener("click", () => loadDashboard());
+
+function connectWs() {
+  if (!accessToken) return;
+  const wsUrl = `${window.location.origin.replace(/^http/, "ws")}/api/ws/notifications?token=${accessToken}`;
+  try {
+    ws = new WebSocket(wsUrl);
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "donation.created") {
+          notify(`Nueva donación: ${data.amount} (${data.donation_type})`, "info");
+        } else if (data.type === "event.created") {
+          notify(`Nuevo evento: ${data.name}`, "info");
+        }
+      } catch {
+        // ignore parse errors
+      }
+    };
+    ws.onerror = () => {
+      notify("WebSocket error", "error");
+    };
+  } catch (err) {
+    console.error(err);
+  }
+}
 

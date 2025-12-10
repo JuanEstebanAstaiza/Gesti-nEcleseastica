@@ -6,7 +6,7 @@
 - Roles mínimos: `public`, `member`, `admin`; autorización aplicada en usuarios/donaciones/documentos/reportes; pendiente extensiones futuras para inscripciones.
 - Usuarios inactivos no pueden autenticarse (respuesta 403).
 ## Websocket
-- Canal `/ws/notifications` envía mensaje de bienvenida y permite eco/broadcast. Usar solo en redes de confianza; agregar auth/token en producción si se va a exponer.
+- Canal `/ws/notifications` requiere `token` (access JWT) en query; envía bienvenida y notificaciones `donation.created` y `event.created`. Usar solo en redes de confianza; considerar token corto/rotación si se expone.
 
 ## Manejo de archivos
 - Tipos permitidos: PDF, JPG, PNG; tamaño máximo configurable (`MAX_UPLOAD_MB`).

@@ -5,6 +5,7 @@ from app.api.services.event import EventService
 from app.core.deps import get_current_user, require_admin
 from app.db.session import get_session
 from app.models.user import User
+from app.api.routes.ws import manager
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -19,6 +20,14 @@ async def create_event(payload: EventCreate, session=Depends(get_session), curre
         end_date=payload.end_date,
         capacity=payload.capacity,
         created_by_id=current_user.id,
+    )
+    await manager.broadcast(
+        {
+            "type": "event.created",
+            "event_id": event.id,
+            "name": event.name,
+            "capacity": event.capacity,
+        }
     )
     return event
 

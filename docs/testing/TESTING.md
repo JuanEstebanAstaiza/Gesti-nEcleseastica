@@ -34,6 +34,7 @@
   - Documentos: subida y descarga con storage aislado en pruebas (`app/tests/test_documents.py`).
   - Eventos e inscripciones básicas: creación admin y registro público, listado (`app/tests/test_events.py`).
   - E2E (`app/tests/test_e2e_flow.py`): registro → login → donación → carga/descarga de comprobante → reporte resumen admin.
+  - Reportes: summary con filtros y dashboard, export CSV (`app/tests/test_reports.py`, `app/tests/test_reports_dashboard.py`, `app/tests/test_reports_export.py`).
 - Ajustes anti-warning: httpx usa `ASGITransport` en tests; loop scope configurado en `pytest.ini`.
 - Advertencias pendientes: migrar cualquier Config heredada a ConfigDict y usar `model_dump` en esquemas restantes.
 - Próximos tests: E2E completos (registro → login → donación con comprobante → descarga → reporte) y flujo de inscripciones cuando se implemente.

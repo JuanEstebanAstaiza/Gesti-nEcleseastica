@@ -59,6 +59,11 @@
 ### Reportes
 - `GET /api/reports/summary` (admin, filtros opcionales `start_date`, `end_date`, `donation_type`)
   - 200 OK → `{ "total_donations": int, "total_amount": float, "by_type": { "diezmo": n, ... }, "filters": {...} }`
+- `GET /api/reports/dashboard` (admin) → agregados por mes y por tipo con filtros opcionales.
+- `GET /api/reports/export` (admin) → CSV con filtros opcionales.
+
+### Websocket
+- `GET /api/ws/notifications?token=<access_token>` (Bearer en query). Eventos enviados: `welcome`, `donation.created`, `event.created`, `echo` (si el cliente envía mensajes).
 
 ## Endpoints planificados (no implementados aún)
 - Dashboard/reportes avanzados: métricas por rango de fechas y tipo de donación.

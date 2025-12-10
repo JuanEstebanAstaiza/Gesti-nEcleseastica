@@ -3,6 +3,9 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi.responses import StreamingResponse
+import csv
+import io
 
 from app.core.deps import require_admin
 from app.db.session import get_session
@@ -102,4 +105,37 @@ async def dashboard(
             "donation_type": donation_type,
         },
     }
+
+
+@router.get("/export")
+async def export_report(
+    session: AsyncSession = Depends(get_session),
+    start_date: date | None = Query(None),
+    end_date: date | None = Query(None),
+    donation_type: str | None = Query(None),
+):
+    stmt = select(
+        Donation.id,
+        Donation.donor_name,
+        Donation.donation_type,
+        Donation.amount,
+        Donation.payment_method,
+        Donation.donation_date,
+    )
+    stmt = _apply_filters(stmt, start_date, end_date, donation_type)
+    rows = (await session.execute(stmt)).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["id", "donor_name", "donation_type", "amount", "payment_method", "donation_date"])
+    for r in rows:
+        writer.writerow(r)
+    output.seek(0)
+
+    filename = "donations_export.csv"
+    return StreamingResponse(
+        output,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 

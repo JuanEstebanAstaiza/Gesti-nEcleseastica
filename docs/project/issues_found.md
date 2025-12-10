@@ -1,5 +1,5 @@
 # Issues encontrados (Fase 1-4)
-- Pruebas actuales (10) pasan; falta dashboard/reportes avanzados y WS opcional. Acción: diseñar métricas adicionales.
-- Migraciones manuales; automatización pendiente para CI (aplicar SQL antes de tests). Acción: usar `scripts/apply_schema.sh` en pipeline.
+- Pruebas actuales (11) pasan; quedan mejoras futuras (no bloqueantes): refinamiento de dashboard/reportes y WS con más eventos.
+- Migraciones manuales; automatización parcialmente cubierta en CI (`apply_schema.sh`). Acciones futuras: extender pipeline a build de imagen/despliegue.
 - Deprecaciones Pydantic: migrar ConfigDict/model_dump en cualquier esquema/flujos restantes (mínimas).
 

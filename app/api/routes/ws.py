@@ -1,5 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from app.core.security import decode_token
+
 
 router = APIRouter()
 
@@ -30,6 +32,18 @@ manager = ConnectionManager()
 
 @router.websocket("/ws/notifications")
 async def notifications_ws(websocket: WebSocket):
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=4401)
+        return
+    try:
+        payload = decode_token(token)
+        if payload.get("scope") != "access_token":
+            raise ValueError("scope")
+    except Exception:
+        await websocket.close(code=4401)
+        return
+
     await manager.connect(websocket)
     try:
         while True:

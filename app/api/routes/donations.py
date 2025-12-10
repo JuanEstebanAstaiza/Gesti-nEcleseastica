@@ -5,6 +5,7 @@ from app.api.services.donation import DonationService
 from app.core.deps import get_current_user, require_admin
 from app.db.session import get_session
 from app.models.user import User
+from app.api.routes.ws import manager
 
 router = APIRouter(prefix="/donations", tags=["donations"])
 
@@ -17,6 +18,14 @@ async def create_donation(
 ):
     service = DonationService(session)
     donation = await service.create_donation(user_id=current_user.id, data=payload.model_dump())
+    await manager.broadcast(
+        {
+            "type": "donation.created",
+            "donation_id": donation.id,
+            "amount": float(donation.amount),
+            "donation_type": donation.donation_type,
+        }
+    )
     return donation
 
 

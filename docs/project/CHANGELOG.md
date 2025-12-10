@@ -6,6 +6,7 @@
 - Inscripciones a eventos, reporte resumen y script `scripts/apply_schema.sh`.
 - Suite total: 10 pruebas (incluye E2E y reglas de inscripciones).
 - Frontend ahora usa token real tras login para acciones protegidas.
+- Dashboard/reportes con filtros y export CSV; WebSocket autenticado con notificaciones de donación/evento.
 
 ## [0.1.3] - 2025-12-10
 - CRUD de usuarios protegido por rol admin (listar, ver, actualizar, eliminar).

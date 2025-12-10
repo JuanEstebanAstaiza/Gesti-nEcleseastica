@@ -50,3 +50,7 @@ jobs:
           PYTHONPATH: .
         run: pytest
 
+      - name: Build Docker image
+        run: |
+          docker build -t ekklesia:test .
+
