@@ -1,45 +1,153 @@
-# Fases
+# Fases del Proyecto
 
-## Fase 1 — Diseño & setup (en progreso)
-- Objetivo: esqueleto del proyecto, contenedores, esquema inicial.
-- Checklist: estructura creada ✅; esquema SQL inicial ✅; docs base ✅ (reubicadas en `docs/`); pruebas críticas ejecutadas ❌ (pendiente).
+## Resumen de Estado
 
-## Fase 2 — Autenticación y usuarios (casi completo)
-- Objetivo: JWT access/refresh, roles, CRUD usuarios.
-- Avances: endpoints auth/login/refresh/register, `/users/me`, CRUD de usuarios con requisito admin; 6 pruebas pasando; puerto 6076 operativo; frontend rediseñado base.
-- Pendiente: autorización fina en otros módulos y CRUD documentos/eventos; extender pruebas E2E.
+| Fase | Estado | Progreso |
+|------|--------|----------|
+| Fase 1: Setup & Arquitectura | ✅ Completada | 100% |
+| Fase 2: Autenticación & Usuarios | ✅ Completada | 100% |
+| Fase 3: Donaciones & Documentos | ✅ Completada | 100% |
+| Fase 4: Eventos & Reportes | ✅ Completada | 100% |
+| Fase 5: Frontend & Integración | ✅ Completada | 100% |
+| Fase 6: Testing & Documentación | ✅ Completada | 100% |
 
-## Fase 3 — Donaciones, documentos y eventos (completado)
-- Objetivo: CRUD donaciones con roles, carga de documentos y eventos/inscripciones.
-- Avances: donaciones con roles, documentos con validación de MIME/tamaño, eventos (crear admin/listar público), inscripciones básicas y reportes resumen admin; 8 pruebas pasando.
-- Pendiente: E2E completo y reportes avanzados; mejorar UX frontend consumiendo tokens reales.
+---
 
-## Fase 4 — E2E y automatización (en progreso)
-- Objetivo: flujo completo E2E y script reproducible de schema.
-- Avances: E2E básico agregado; script `scripts/apply_schema.sh`; frontend usa tokens tras login; inscripciones con cupo/duplicados/cancelación.
-- Pendiente: reportes avanzados/dashboard y CI que ejecute apply_schema + tests.
+## Fase 1: Setup & Arquitectura ✅
 
-## Fase 3 — Donaciones
-- Objetivo: CRUD donaciones, filtros y export CSV.
-- Hecho cuando: endpoints, validaciones, pruebas integración, actualización de dashboard inicial.
+### Objetivos
+- [x] Crear estructura de directorios
+- [x] Configurar Docker Compose
+- [x] Definir modelos base
+- [x] Documentar arquitectura
 
-## Fase 4 — Documentos y almacenamiento
-- Objetivo: subir/descargar soportes, trazabilidad, validaciones de tipo/tamaño.
-- Hecho cuando: metadata en DB, almacenamiento seguro, tests, doc de seguridad.
+### Entregables
+- `docker-compose.yml` con PostgreSQL y backend
+- Estructura de carpetas (app/, frontend/, docs/)
+- `ARCHITECTURE.md` inicial
+- `DATABASE_SCHEMA.md` con ERD
 
-## Fase 5 — Eventos e inscripciones
-- Objetivo: CRUD eventos, inscripciones, vínculos con donaciones.
-- Hecho cuando: endpoints y pruebas de flujo.
+---
 
-## Fase 6 — Dashboard y reportes
-- Objetivo: métricas básicas, reportes por rango de fecha y tipo, internacionalización simple.
-- Hecho cuando: endpoints/reportes y E2E de flujo principal.
+## Fase 2: Autenticación & Usuarios ✅
 
-## Fase 7 — E2E y performance
-- Objetivo: flujos completos con soportes, backoff anti-flaky, pruebas de carga ligeras (opcional).
-- Hecho cuando: suite E2E estable y documentación de ejecución en CI.
+### Objetivos
+- [x] Implementar registro de usuarios
+- [x] Implementar login con JWT
+- [x] Implementar refresh tokens
+- [x] CRUD de usuarios (admin)
+- [x] Protección de rutas por roles
 
-## Fase 8 — Endurecimiento y despliegue
-- Objetivo: hardening, backups, monitoreo, checklist de producción.
-- Hecho cuando: despliegue reproducible, SECURITY/DEPLOYMENT actualizados, backups probados.
+### Entregables
+- Endpoints `/auth/register`, `/auth/login`, `/auth/refresh`
+- Endpoint `/users/me`
+- Endpoints admin `/users`, `/users/{id}`
+- Tests de autenticación
 
+---
+
+## Fase 3: Donaciones & Documentos ✅
+
+### Objetivos
+- [x] CRUD de donaciones
+- [x] Sistema de subida de archivos
+- [x] Validación de MIME types
+- [x] Generación de checksums
+- [x] Descarga de documentos
+
+### Entregables
+- Endpoints `/donations` (crear, listar)
+- Endpoints `/documents` (subir, descargar, listar)
+- Validación de archivos (10MB, PDF/PNG/JPG)
+- Tests de donaciones y documentos
+
+---
+
+## Fase 4: Eventos & Reportes ✅
+
+### Objetivos
+- [x] CRUD de eventos
+- [x] Sistema de inscripciones
+- [x] Validación de capacidad
+- [x] Reportes con filtros
+- [x] Exportación CSV
+- [x] WebSocket para notificaciones
+
+### Entregables
+- Endpoints `/events` (crear, listar)
+- Endpoints `/events/{id}/registrations`
+- Endpoints `/reports/summary`, `/reports/dashboard`, `/reports/export`
+- Endpoint WebSocket `/ws/notifications`
+- Tests de eventos y reportes
+
+---
+
+## Fase 5: Frontend & Integración ✅
+
+### Objetivos
+- [x] Diseño moderno (Stripe/Instagram)
+- [x] Sistema de autenticación UI
+- [x] Dashboard con métricas
+- [x] Formularios de gestión
+- [x] Separación frontend/backend
+- [x] Configuración CORS
+- [x] WebSocket en cliente
+
+### Entregables
+- `frontend/index.html` con SPA
+- `frontend/css/styles.css` con tema oscuro
+- `frontend/js/app.js` con lógica completa
+- `frontend/Dockerfile` con Nginx
+- Docker Compose actualizado (3 servicios)
+
+---
+
+## Fase 6: Testing & Documentación ✅
+
+### Objetivos
+- [x] Tests unitarios completos
+- [x] Tests de integración
+- [x] Tests end-to-end
+- [x] Tests frontend-backend
+- [x] Documentación actualizada
+
+### Entregables
+- `tests/test_*.py` - Suite completa de tests
+- `docs/` - Documentación actualizada
+- `README.md` - Guía de inicio rápido
+- `CHANGELOG.md` - Historial de cambios
+
+---
+
+## Próximas Mejoras (Backlog)
+
+### Prioridad Alta
+- [ ] Internacionalización (ES/EN)
+- [ ] Recuperación de contraseña por email
+- [ ] Paginación en listados
+- [ ] Filtros avanzados en frontend
+
+### Prioridad Media
+- [ ] Almacenamiento S3 compatible
+- [ ] Gráficos con Chart.js
+- [ ] Notificaciones push
+- [ ] Exportación PDF de reportes
+
+### Prioridad Baja
+- [ ] Dark/Light mode toggle
+- [ ] Aplicación móvil (PWA)
+- [ ] Integración con pasarelas de pago
+- [ ] Auditoría completa de acciones
+
+---
+
+## Criterios de "Done"
+
+Una fase se considera completada cuando:
+
+1. ✅ Código implementado y funcional
+2. ✅ Tests pasan (mínimo 80% cobertura)
+3. ✅ Documentación actualizada
+4. ✅ Sin errores de linting
+5. ✅ Docker build exitoso
+6. ✅ Revisión de seguridad básica

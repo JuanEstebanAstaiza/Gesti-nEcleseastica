@@ -9,7 +9,9 @@ COPY requirements.txt ./requirements.txt
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY app ./app
-COPY frontend ./frontend
+
+# Create storage directory
+RUN mkdir -p /code/storage
 
 EXPOSE 6076
 

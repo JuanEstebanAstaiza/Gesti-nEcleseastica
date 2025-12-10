@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:15-alpine
@@ -10,6 +8,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-ekklesia}
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./app/db/sql:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ekklesia}"]
       interval: 5s
@@ -18,24 +17,34 @@ services:
     ports:
       - "55432:5432"
 
-  web:
+  backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ekklesia_web
+    container_name: ekklesia_backend
     env_file:
       - .env
     volumes:
       - ./app:/code/app
-      - ./frontend:/code/frontend
       - ./storage:/code/storage
     ports:
       - "6076:6076"
     depends_on:
       db:
         condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ekklesia_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
 
 volumes:
   pgdata:
     driver: local
-

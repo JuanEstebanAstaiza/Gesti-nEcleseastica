@@ -3,227 +3,634 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ekklesia Admin</title>
+  <title>Ekklesia — Gestión Eclesiástica</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.2.0/remixicon.min.css">
   <link rel="stylesheet" href="./css/styles.css" />
-  <script src="https://unpkg.com/feather-icons" defer></script>
 </head>
 <body>
-  <div class="gradient-bg"></div>
-  <header class="topbar glassy">
-    <div class="brand">
-      <div class="logo"><i data-feather="layers"></i></div>
-      <div>
-        <h1>Ekklesia Admin</h1>
-        <p>Gestión de donaciones, eventos y trazabilidad documental</p>
-      </div>
-    </div>
-    <div class="actions">
-      <button class="ghost" id="language-toggle">ES/EN</button>
-      <button class="primary">Ir al dashboard</button>
-    </div>
-  </header>
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
 
-  <main class="layout">
-    <section class="card glassy">
-      <header class="card-header">
-        <div>
-          <p class="eyebrow">Dashboard</p>
-          <h3>Resumen</h3>
+  <!-- Auth Modal -->
+  <div id="auth-modal" class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content auth-modal-content">
+      <div class="auth-brand">
+        <div class="auth-logo">
+          <i class="ri-hand-heart-line"></i>
         </div>
-        <button class="ghost" id="refresh-dashboard">Actualizar</button>
-      </header>
-      <div class="metrics" id="dashboard-metrics">
-        <div class="metric-tile">
-          <p class="muted">Total donaciones</p>
-          <h3 id="metric-count">-</h3>
-        </div>
-        <div class="metric-tile">
-          <p class="muted">Monto total</p>
-          <h3 id="metric-amount">-</h3>
-        </div>
-        <div class="metric-tile">
-          <p class="muted">Por tipo</p>
-          <ul id="metric-by-type"></ul>
-        </div>
+        <h1>Ekklesia</h1>
+        <p>Sistema de Gestión Eclesiástica</p>
       </div>
-    </section>
 
-    <section class="hero glassy">
-      <div>
-        <p class="eyebrow">Flujo completo</p>
-        <h2>Registra, audita y respalda cada donación con evidencia.</h2>
-        <p class="muted">
-          Formularios alineados a los formatos proporcionados y trazabilidad garantizada mediante documentos vinculados.
-        </p>
-        <div class="chips">
-          <span class="chip"><i data-feather="heart"></i> Donaciones</span>
-          <span class="chip"><i data-feather="file-text"></i> Documentos</span>
-          <span class="chip"><i data-feather="calendar"></i> Eventos</span>
-          <span class="chip"><i data-feather="bar-chart-2"></i> Reportes</span>
-        </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Ingresar</button>
+        <button class="auth-tab" data-tab="register">Registrarse</button>
       </div>
-      <div class="metric-card">
-        <p class="muted">Donaciones del mes</p>
-        <h3>$ 12,450.00</h3>
-        <p class="positive">▲ 8% vs mes anterior</p>
-        <div class="sparkline" aria-hidden="true"></div>
-      </div>
-    </section>
 
-    <section class="grid-2">
-      <article class="card glassy">
-        <header class="card-header">
-          <div>
-            <p class="eyebrow">Sesión</p>
-            <h3>Ingreso</h3>
+      <form id="login-form" class="auth-form active">
+        <div class="form-group">
+          <label for="login-email">Correo electrónico</label>
+          <div class="input-wrapper">
+            <i class="ri-mail-line"></i>
+            <input type="email" id="login-email" name="email" placeholder="tu@correo.com" required />
           </div>
-          <span class="pill">JWT</span>
-        </header>
-        <form id="login-form" class="form-grid">
-          <label>Correo
-            <input type="email" name="email" required />
-          </label>
-          <label>Contraseña
-            <input type="password" name="password" required />
-          </label>
-          <button type="submit" class="primary full">Ingresar</button>
-        </form>
-      </article>
-
-      <article class="card glassy">
-        <header class="card-header">
-          <div>
-            <p class="eyebrow">Soportes</p>
-            <h3>Subir documento vinculado</h3>
-          </div>
-          <span class="pill">PDF/PNG/JPG</span>
-        </header>
-        <form id="document-form" class="form-grid">
-          <label>Tipo de vínculo
-            <select name="link_type">
-              <option value="donation">Donación</option>
-              <option value="user">Usuario</option>
-              <option value="event">Evento</option>
-            </select>
-          </label>
-          <label>ID de referencia
-            <input type="text" name="ref_id" required />
-          </label>
-          <label>Archivo (PDF/JPG/PNG)
-            <input type="file" name="file" accept=".pdf,image/png,image/jpeg" required />
-          </label>
-          <label>Descripción
-            <textarea name="description" rows="2"></textarea>
-          </label>
-          <button type="submit" class="secondary full">Subir documento</button>
-        </form>
-      </article>
-    </section>
-
-    <section class="card glassy">
-      <header class="card-header">
-        <div>
-          <p class="eyebrow">Donaciones</p>
-          <h3>Registro de Donación</h3>
         </div>
-        <span class="pill">Formato oficial</span>
-      </header>
-      <form id="donation-form" class="form-grid wide">
-        <label>Nombre del donante
-          <input type="text" name="donor_name" required />
-        </label>
-        <label>Documento
-          <input type="text" name="donor_document" />
-        </label>
-        <label>Tipo
-          <select name="donation_type" required>
-            <option value="diezmo">Diezmo</option>
-            <option value="ofrenda">Ofrenda</option>
-            <option value="misiones">Misiones</option>
-            <option value="especial">Especial</option>
-          </select>
-        </label>
-        <label>Monto
-          <input type="number" name="amount" min="0" step="0.01" required />
-        </label>
-        <label>Medio de pago
-          <select name="payment_method" required>
-            <option value="efectivo">Efectivo</option>
-            <option value="transferencia">Transferencia</option>
-            <option value="tarjeta">Tarjeta</option>
-            <option value="otro">Otro</option>
-          </select>
-        </label>
-        <label>Fecha
-          <input type="date" name="donation_date" required />
-        </label>
-        <label class="full">Nota / referencia
-          <textarea name="note" rows="3" placeholder="Detalle según formato de comprobante"></textarea>
-        </label>
-        <label class="full">Comprobante (PDF/JPG/PNG, máx 10MB)
-          <input type="file" name="receipt" accept=".pdf,image/png,image/jpeg" />
-        </label>
-        <button type="submit" class="primary full">Guardar donación</button>
+        <div class="form-group">
+          <label for="login-password">Contraseña</label>
+          <div class="input-wrapper">
+            <i class="ri-lock-line"></i>
+            <input type="password" id="login-password" name="password" placeholder="••••••••" required />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">
+          <span>Ingresar</span>
+          <i class="ri-arrow-right-line"></i>
+        </button>
       </form>
-    </section>
 
-    <section class="grid-2">
-      <article class="card glassy">
-        <header class="card-header">
-          <div>
-            <p class="eyebrow">Eventos</p>
-            <h3>Crear evento (admin)</h3>
+      <form id="register-form" class="auth-form">
+        <div class="form-group">
+          <label for="register-name">Nombre completo</label>
+          <div class="input-wrapper">
+            <i class="ri-user-line"></i>
+            <input type="text" id="register-name" name="full_name" placeholder="Juan Pérez" required />
           </div>
-          <span class="pill">Agenda</span>
-        </header>
-        <form id="event-form" class="form-grid">
-          <label>Nombre
-            <input type="text" name="name" required />
-          </label>
-          <label>Descripción
-            <textarea name="description" rows="2"></textarea>
-          </label>
-          <label>Cupo (opcional)
-            <input type="number" name="capacity" min="1" />
-          </label>
-          <label>Inicio
-            <input type="date" name="start_date" />
-          </label>
-          <label>Fin
-            <input type="date" name="end_date" />
-          </label>
-          <button type="submit" class="secondary full">Crear evento</button>
-        </form>
-      </article>
-
-      <article class="card glassy">
-        <header class="card-header">
-          <div>
-            <p class="eyebrow">Inscripciones</p>
-            <h3>Registrar asistente</h3>
+        </div>
+        <div class="form-group">
+          <label for="register-email">Correo electrónico</label>
+          <div class="input-wrapper">
+            <i class="ri-mail-line"></i>
+            <input type="email" id="register-email" name="email" placeholder="tu@correo.com" required />
           </div>
-          <span class="pill">Público</span>
-        </header>
-        <form id="registration-form" class="form-grid">
-          <label>ID Evento
-            <input type="number" name="event_id" min="1" required />
-          </label>
-          <label>Nombre asistente
-            <input type="text" name="attendee_name" required />
-          </label>
-          <label>Correo asistente
-            <input type="email" name="attendee_email" required />
-          </label>
-          <label class="full">Notas
-            <textarea name="notes" rows="2"></textarea>
-          </label>
-          <button type="submit" class="primary full">Registrar</button>
-        </form>
-      </article>
-    </section>
-  </main>
+        </div>
+        <div class="form-group">
+          <label for="register-password">Contraseña</label>
+          <div class="input-wrapper">
+            <i class="ri-lock-line"></i>
+            <input type="password" id="register-password" name="password" placeholder="Mínimo 6 caracteres" required minlength="6" />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">
+          <span>Crear cuenta</span>
+          <i class="ri-arrow-right-line"></i>
+        </button>
+      </form>
+    </div>
+  </div>
 
-  <script type="module" src="./js/app.js"></script>
+  <!-- Main App -->
+  <div id="app" class="app hidden">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <i class="ri-hand-heart-line"></i>
+        </div>
+        <div class="sidebar-brand">
+          <h2>Ekklesia</h2>
+          <span class="sidebar-subtitle">Panel de Gestión</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-section="dashboard">
+          <i class="ri-dashboard-3-line"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-section="donations">
+          <i class="ri-heart-3-line"></i>
+          <span>Donaciones</span>
+        </a>
+        <a href="#" class="nav-item" data-section="documents">
+          <i class="ri-file-text-line"></i>
+          <span>Documentos</span>
+        </a>
+        <a href="#" class="nav-item" data-section="events">
+          <i class="ri-calendar-event-line"></i>
+          <span>Eventos</span>
+        </a>
+        <a href="#" class="nav-item" data-section="reports">
+          <i class="ri-bar-chart-box-line"></i>
+          <span>Reportes</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-card">
+          <div class="user-avatar">
+            <i class="ri-user-line"></i>
+          </div>
+          <div class="user-info">
+            <span id="user-name">Usuario</span>
+            <span id="user-role" class="user-role">member</span>
+          </div>
+        </div>
+        <button id="logout-btn" class="btn btn-ghost btn-sm">
+          <i class="ri-logout-box-r-line"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Dashboard Section -->
+      <section id="section-dashboard" class="section active">
+        <header class="section-header">
+          <div>
+            <h1>Dashboard</h1>
+            <p>Resumen general de la iglesia</p>
+          </div>
+          <button id="refresh-dashboard" class="btn btn-secondary">
+            <i class="ri-refresh-line"></i>
+            <span>Actualizar</span>
+          </button>
+        </header>
+
+        <div class="stats-grid">
+          <div class="stat-card stat-primary">
+            <div class="stat-icon">
+              <i class="ri-heart-3-fill"></i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-label">Total Donaciones</span>
+              <h3 id="stat-donations-count" class="stat-value">—</h3>
+            </div>
+          </div>
+          <div class="stat-card stat-success">
+            <div class="stat-icon">
+              <i class="ri-money-dollar-circle-fill"></i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-label">Monto Total</span>
+              <h3 id="stat-total-amount" class="stat-value">—</h3>
+            </div>
+          </div>
+          <div class="stat-card stat-info">
+            <div class="stat-icon">
+              <i class="ri-calendar-check-fill"></i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-label">Eventos Activos</span>
+              <h3 id="stat-events-count" class="stat-value">—</h3>
+            </div>
+          </div>
+          <div class="stat-card stat-warning">
+            <div class="stat-icon">
+              <i class="ri-file-list-3-fill"></i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-label">Documentos</span>
+              <h3 id="stat-documents-count" class="stat-value">—</h3>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-header">
+              <h3>Donaciones por Tipo</h3>
+              <span class="badge">Este mes</span>
+            </div>
+            <div class="card-body">
+              <div id="chart-by-type" class="chart-container">
+                <div class="chart-placeholder">
+                  <i class="ri-pie-chart-2-line"></i>
+                  <p>Inicia sesión para ver estadísticas</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3>Actividad Reciente</h3>
+              <a href="#" class="link" data-section="donations">Ver todo →</a>
+            </div>
+            <div class="card-body">
+              <div id="recent-activity" class="activity-list">
+                <div class="activity-empty">
+                  <i class="ri-inbox-line"></i>
+                  <p>No hay actividad reciente</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Donations Section -->
+      <section id="section-donations" class="section">
+        <header class="section-header">
+          <div>
+            <h1>Donaciones</h1>
+            <p>Registra y administra las donaciones</p>
+          </div>
+          <button id="new-donation-btn" class="btn btn-primary">
+            <i class="ri-add-line"></i>
+            <span>Nueva Donación</span>
+          </button>
+        </header>
+
+        <!-- Donation Form Card -->
+        <div id="donation-form-card" class="card form-card hidden">
+          <div class="card-header">
+            <h3>Registrar Donación</h3>
+            <button class="btn btn-ghost btn-icon close-form-btn">
+              <i class="ri-close-line"></i>
+            </button>
+          </div>
+          <div class="card-body">
+            <form id="donation-form" class="form-grid">
+              <div class="form-group">
+                <label for="donation-type">Tipo de Donación</label>
+                <div class="select-wrapper">
+                  <select id="donation-type" name="donation_type" required>
+                    <option value="diezmo">Diezmo</option>
+                    <option value="ofrenda">Ofrenda</option>
+                    <option value="misiones">Misiones</option>
+                    <option value="especial">Ofrenda Especial</option>
+                  </select>
+                  <i class="ri-arrow-down-s-line"></i>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="donation-amount">Monto</label>
+                <div class="input-wrapper">
+                  <span class="input-prefix">$</span>
+                  <input type="number" id="donation-amount" name="amount" step="0.01" min="0" placeholder="0.00" required />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="donation-method">Medio de Pago</label>
+                <div class="select-wrapper">
+                  <select id="donation-method" name="payment_method" required>
+                    <option value="efectivo">Efectivo</option>
+                    <option value="transferencia">Transferencia</option>
+                    <option value="tarjeta">Tarjeta</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                  <i class="ri-arrow-down-s-line"></i>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="donation-date">Fecha</label>
+                <div class="input-wrapper">
+                  <i class="ri-calendar-line"></i>
+                  <input type="date" id="donation-date" name="donation_date" required />
+                </div>
+              </div>
+              <div class="form-group full-width">
+                <label for="donation-note">Nota / Referencia</label>
+                <textarea id="donation-note" name="note" rows="3" placeholder="Detalles adicionales..."></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary close-form-btn">Cancelar</button>
+                <button type="submit" class="btn btn-primary">
+                  <i class="ri-save-line"></i>
+                  <span>Guardar Donación</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Donations List -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Historial de Donaciones</h3>
+            <div class="card-actions">
+              <button id="export-donations-btn" class="btn btn-ghost btn-sm">
+                <i class="ri-download-2-line"></i>
+                <span>Exportar CSV</span>
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="donations-list" class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Tipo</th>
+                    <th>Monto</th>
+                    <th>Método</th>
+                    <th>Fecha</th>
+                    <th>Nota</th>
+                  </tr>
+                </thead>
+                <tbody id="donations-tbody">
+                  <tr class="empty-row">
+                    <td colspan="5">
+                      <div class="empty-state">
+                        <i class="ri-inbox-line"></i>
+                        <p>No hay donaciones registradas</p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Documents Section -->
+      <section id="section-documents" class="section">
+        <header class="section-header">
+          <div>
+            <h1>Documentos</h1>
+            <p>Gestiona los documentos de soporte</p>
+          </div>
+          <button id="new-document-btn" class="btn btn-primary">
+            <i class="ri-upload-2-line"></i>
+            <span>Subir Documento</span>
+          </button>
+        </header>
+
+        <!-- Document Upload Form -->
+        <div id="document-form-card" class="card form-card hidden">
+          <div class="card-header">
+            <h3>Subir Documento</h3>
+            <button class="btn btn-ghost btn-icon close-form-btn">
+              <i class="ri-close-line"></i>
+            </button>
+          </div>
+          <div class="card-body">
+            <form id="document-form" class="form-grid">
+              <div class="form-group">
+                <label for="doc-link-type">Vincular a</label>
+                <div class="select-wrapper">
+                  <select id="doc-link-type" name="link_type">
+                    <option value="donation">Donación</option>
+                    <option value="event">Evento</option>
+                    <option value="user">Usuario</option>
+                  </select>
+                  <i class="ri-arrow-down-s-line"></i>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="doc-ref-id">ID de Referencia</label>
+                <div class="input-wrapper">
+                  <i class="ri-hashtag"></i>
+                  <input type="text" id="doc-ref-id" name="ref_id" placeholder="Ej: 1" />
+                </div>
+              </div>
+              <div class="form-group full-width">
+                <label for="doc-description">Descripción</label>
+                <textarea id="doc-description" name="description" rows="2" placeholder="Descripción del documento..."></textarea>
+              </div>
+              <div class="form-group full-width">
+                <label>Archivo</label>
+                <div class="file-upload" id="file-drop-zone">
+                  <input type="file" id="doc-file" name="file" accept=".pdf,.png,.jpg,.jpeg" hidden />
+                  <i class="ri-upload-cloud-2-line"></i>
+                  <p>Arrastra tu archivo aquí o <span class="link">selecciona</span></p>
+                  <span class="file-hint">PDF, PNG, JPG (máx. 10MB)</span>
+                  <div id="file-preview" class="file-preview hidden">
+                    <i class="ri-file-line"></i>
+                    <span id="file-name">archivo.pdf</span>
+                    <button type="button" id="remove-file" class="btn btn-ghost btn-icon btn-xs">
+                      <i class="ri-close-line"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary close-form-btn">Cancelar</button>
+                <button type="submit" class="btn btn-primary">
+                  <i class="ri-upload-2-line"></i>
+                  <span>Subir</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Documents List -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Documentos Subidos</h3>
+          </div>
+          <div class="card-body">
+            <div id="documents-list" class="documents-grid">
+              <div class="empty-state">
+                <i class="ri-folder-line"></i>
+                <p>No hay documentos subidos</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Events Section -->
+      <section id="section-events" class="section">
+        <header class="section-header">
+          <div>
+            <h1>Eventos</h1>
+            <p>Crea y administra eventos de la iglesia</p>
+          </div>
+          <button id="new-event-btn" class="btn btn-primary">
+            <i class="ri-add-line"></i>
+            <span>Nuevo Evento</span>
+          </button>
+        </header>
+
+        <!-- Event Form -->
+        <div id="event-form-card" class="card form-card hidden">
+          <div class="card-header">
+            <h3>Crear Evento</h3>
+            <button class="btn btn-ghost btn-icon close-form-btn">
+              <i class="ri-close-line"></i>
+            </button>
+          </div>
+          <div class="card-body">
+            <form id="event-form" class="form-grid">
+              <div class="form-group full-width">
+                <label for="event-name">Nombre del Evento</label>
+                <div class="input-wrapper">
+                  <i class="ri-calendar-event-line"></i>
+                  <input type="text" id="event-name" name="name" placeholder="Ej: Conferencia de Jóvenes" required />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="event-start">Fecha de Inicio</label>
+                <div class="input-wrapper">
+                  <i class="ri-calendar-line"></i>
+                  <input type="date" id="event-start" name="start_date" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="event-end">Fecha de Fin</label>
+                <div class="input-wrapper">
+                  <i class="ri-calendar-line"></i>
+                  <input type="date" id="event-end" name="end_date" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="event-capacity">Capacidad</label>
+                <div class="input-wrapper">
+                  <i class="ri-group-line"></i>
+                  <input type="number" id="event-capacity" name="capacity" min="1" placeholder="Sin límite" />
+                </div>
+              </div>
+              <div class="form-group full-width">
+                <label for="event-description">Descripción</label>
+                <textarea id="event-description" name="description" rows="3" placeholder="Detalles del evento..."></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary close-form-btn">Cancelar</button>
+                <button type="submit" class="btn btn-primary">
+                  <i class="ri-save-line"></i>
+                  <span>Crear Evento</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Events List -->
+        <div id="events-container" class="events-grid">
+          <div class="empty-state-full">
+            <i class="ri-calendar-todo-line"></i>
+            <h3>No hay eventos programados</h3>
+            <p>Crea tu primer evento para comenzar</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Reports Section -->
+      <section id="section-reports" class="section">
+        <header class="section-header">
+          <div>
+            <h1>Reportes</h1>
+            <p>Genera reportes y exporta datos</p>
+          </div>
+        </header>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Filtros de Reporte</h3>
+          </div>
+          <div class="card-body">
+            <form id="report-filters" class="form-row">
+              <div class="form-group">
+                <label for="report-from">Desde</label>
+                <input type="date" id="report-from" name="from_date" />
+              </div>
+              <div class="form-group">
+                <label for="report-to">Hasta</label>
+                <input type="date" id="report-to" name="to_date" />
+              </div>
+              <div class="form-group">
+                <label for="report-type">Tipo</label>
+                <div class="select-wrapper">
+                  <select id="report-type" name="donation_type">
+                    <option value="">Todos</option>
+                    <option value="diezmo">Diezmo</option>
+                    <option value="ofrenda">Ofrenda</option>
+                    <option value="misiones">Misiones</option>
+                    <option value="especial">Especial</option>
+                  </select>
+                  <i class="ri-arrow-down-s-line"></i>
+                </div>
+              </div>
+              <div class="form-group form-actions-inline">
+                <button type="submit" class="btn btn-primary">
+                  <i class="ri-filter-3-line"></i>
+                  <span>Filtrar</span>
+                </button>
+                <button type="button" id="export-report-btn" class="btn btn-secondary">
+                  <i class="ri-file-excel-2-line"></i>
+                  <span>Exportar CSV</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="stats-grid stats-3">
+          <div class="stat-card stat-outline">
+            <div class="stat-content">
+              <span class="stat-label">Total Donaciones</span>
+              <h3 id="report-total-count" class="stat-value">—</h3>
+            </div>
+          </div>
+          <div class="stat-card stat-outline">
+            <div class="stat-content">
+              <span class="stat-label">Monto Total</span>
+              <h3 id="report-total-amount" class="stat-value">—</h3>
+            </div>
+          </div>
+          <div class="stat-card stat-outline">
+            <div class="stat-content">
+              <span class="stat-label">Promedio</span>
+              <h3 id="report-average" class="stat-value">—</h3>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Desglose por Tipo</h3>
+          </div>
+          <div class="card-body">
+            <div id="report-breakdown" class="breakdown-grid">
+              <div class="empty-state">
+                <i class="ri-pie-chart-line"></i>
+                <p>Aplica filtros para ver el desglose</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Registration Modal (for public event registration) -->
+  <div id="registration-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Inscribirse al Evento</h3>
+        <button class="btn btn-ghost btn-icon modal-close-btn">
+          <i class="ri-close-line"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="registration-form">
+          <input type="hidden" id="reg-event-id" name="event_id" />
+          <div class="form-group">
+            <label for="reg-name">Nombre completo</label>
+            <div class="input-wrapper">
+              <i class="ri-user-line"></i>
+              <input type="text" id="reg-name" name="attendee_name" placeholder="Tu nombre" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="reg-email">Correo electrónico</label>
+            <div class="input-wrapper">
+              <i class="ri-mail-line"></i>
+              <input type="email" id="reg-email" name="attendee_email" placeholder="tu@correo.com" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="reg-notes">Notas (opcional)</label>
+            <textarea id="reg-notes" name="notes" rows="2" placeholder="Comentarios adicionales..."></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary modal-close-btn">Cancelar</button>
+            <button type="submit" class="btn btn-primary">
+              <i class="ri-check-line"></i>
+              <span>Confirmar Inscripción</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/app.js" type="module"></script>
 </body>
 </html>
-
