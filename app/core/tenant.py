@@ -26,7 +26,7 @@ def get_tenant_db_url(db_name: str) -> str:
 
 def get_master_db_url() -> str:
     """URL de la base de datos master"""
-    return get_tenant_db_url("ekklesia_master")
+    return str(settings.master_database_url)
 
 
 async def get_tenant_engine(db_name: str):

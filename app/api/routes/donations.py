@@ -28,8 +28,8 @@ async def create_donation(
     return donation
 
 
-@router.get("", response_model=list[DonationRead], dependencies=[Depends(require_admin)])
-async def list_donations(session=Depends(get_session)):
+@router.get("", response_model=list[DonationRead])
+async def list_donations(session=Depends(get_session), current_user: User = Depends(get_current_user)):
     service = DonationService(session)
     return await service.list_for_admin()
 

@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     environment: str = "development"
 
     database_url: AnyUrl = "postgresql+asyncpg://ekklesia:ekklesia@db:5432/ekklesia"
+    master_database_url: AnyUrl = "postgresql+asyncpg://ekklesia:ekklesia@db_master:5432/ekklesia_master"
 
     secret_key: str = "CHANGE_ME"
     access_token_exp_minutes: int = 30

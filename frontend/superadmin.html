@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ekklesia — Panel Super Administrador</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.2.0/remixicon.min.css">
+  <style>
+    :root {
+      --bg-dark: #0a0a0f;
+      --bg-card: #111118;
+      --bg-card-hover: #1a1a24;
+      --bg-input: #16161e;
+      --border: #2a2a3a;
+      --text-primary: #f4f4f5;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --accent-purple: #8b5cf6;
+      --accent-purple-hover: #7c3aed;
+      --accent-cyan: #06b6d4;
+      --accent-green: #22c55e;
+      --accent-red: #ef4444;
+      --accent-orange: #f59e0b;
+      --accent-blue: #3b82f6;
+      --gradient-purple: linear-gradient(135deg, #8b5cf6, #6366f1);
+      --gradient-cyan: linear-gradient(135deg, #06b6d4, #22d3ee);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* Layout */
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sidebar-logo {
+      width: 40px;
+      height: 40px;
+      background: var(--gradient-purple);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .sidebar-brand h1 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .sidebar-brand span {
+      font-size: 12px;
+      color: var(--accent-purple);
+      font-weight: 500;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .nav-section {
+      margin-bottom: 24px;
+    }
+
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      padding: 0 12px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: var(--accent-purple);
+      color: white;
+    }
+
+    .nav-item i {
+      font-size: 18px;
+    }
+
+    .sidebar-footer {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-input);
+      border-radius: var(--radius-sm);
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      background: var(--gradient-cyan);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-details {
+      flex: 1;
+    }
+
+    .user-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .user-role {
+      font-size: 12px;
+      color: var(--accent-cyan);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: 260px;
+      padding: 24px;
+    }
+
+    /* Page Header */
+    .page-header {
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .page-subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .stat-icon.purple { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+    .stat-icon.cyan { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
+    .stat-icon.green { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); }
+    .stat-icon.orange { background: rgba(245, 158, 11, 0.15); color: var(--accent-orange); }
+
+    .stat-content h3 {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .stat-change {
+      font-size: 12px;
+      color: var(--accent-green);
+      margin-top: 4px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      background: var(--bg-input);
+    }
+
+    td {
+      font-size: 14px;
+    }
+
+    tr:hover td {
+      background: var(--bg-card-hover);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .badge-success {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--accent-green);
+    }
+
+    .badge-warning {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-orange);
+    }
+
+    .badge-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-red);
+    }
+
+    .badge-info {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent-blue);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent-purple);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-purple-hover);
+    }
+
+    .btn-secondary {
+      background: var(--bg-input);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      padding: 8px;
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+    }
+
+    .btn-danger {
+      background: var(--accent-red);
+      color: white;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--text-secondary);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent-purple);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    /* Progress Bar */
+    .progress-bar {
+      height: 8px;
+      background: var(--bg-input);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+
+    .progress-fill.purple { background: var(--accent-purple); }
+    .progress-fill.cyan { background: var(--accent-cyan); }
+    .progress-fill.green { background: var(--accent-green); }
+    .progress-fill.orange { background: var(--accent-orange); }
+    .progress-fill.red { background: var(--accent-red); }
+
+    /* System Monitor */
+    .system-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .system-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .system-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .system-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .system-value {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .system-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .modal.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .modal-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow);
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast-success { border-left: 3px solid var(--accent-green); }
+    .toast-error { border-left: 3px solid var(--accent-red); }
+    .toast-warning { border-left: 3px solid var(--accent-orange); }
+    .toast-info { border-left: 3px solid var(--accent-blue); }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Login Page */
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-dark);
+    }
+
+    .login-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-logo {
+      width: 64px;
+      height: 64px;
+      background: var(--gradient-purple);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin: 0 auto 16px;
+    }
+
+    .login-title {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .login-subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    /* Sections */
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    /* Grid layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    .empty-state i {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    /* Utilities */
+    .hidden { display: none !important; }
+    .text-green { color: var(--accent-green); }
+    .text-red { color: var(--accent-red); }
+    .text-orange { color: var(--accent-orange); }
+    .mt-4 { margin-top: 16px; }
+    .mb-4 { margin-bottom: 16px; }
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-2 { gap: 8px; }
+    .gap-4 { gap: 16px; }
+  </style>
+</head>
+<body>
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Login Page -->
+  <div id="login-page" class="login-page">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo">
+          <i class="ri-shield-star-line"></i>
+        </div>
+        <h1 class="login-title">Super Admin</h1>
+        <p class="login-subtitle">Panel de administración de Ekklesia</p>
+      </div>
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label">Correo electrónico</label>
+          <input type="email" name="email" class="form-input" placeholder="admin@ekklesia.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input type="password" name="password" class="form-input" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">
+          <i class="ri-login-box-line"></i>
+          Iniciar Sesión
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Dashboard -->
+  <div id="admin-app" class="admin-layout hidden">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand">
+          <div class="sidebar-logo">
+            <i class="ri-shield-star-line"></i>
+          </div>
+          <div>
+            <h1>Ekklesia</h1>
+            <span>Super Admin</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a class="nav-item active" data-section="dashboard">
+            <i class="ri-dashboard-3-line"></i>
+            <span>Dashboard</span>
+          </a>
+          <a class="nav-item" data-section="tenants">
+            <i class="ri-building-2-line"></i>
+            <span>Iglesias</span>
+          </a>
+          <a class="nav-item" data-section="plans">
+            <i class="ri-price-tag-3-line"></i>
+            <span>Planes</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Finanzas</div>
+          <a class="nav-item" data-section="revenue">
+            <i class="ri-money-dollar-circle-line"></i>
+            <span>Ingresos</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Sistema</div>
+          <a class="nav-item" data-section="system">
+            <i class="ri-server-line"></i>
+            <span>Monitoreo</span>
+          </a>
+          <a class="nav-item" data-section="backups">
+            <i class="ri-hard-drive-2-line"></i>
+            <span>Backups</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">
+            <i class="ri-user-line"></i>
+          </div>
+          <div class="user-details">
+            <div class="user-name" id="admin-name">Super Admin</div>
+            <div class="user-role">Administrador</div>
+          </div>
+          <button class="btn btn-ghost" onclick="logout()" title="Cerrar sesión">
+            <i class="ri-logout-box-r-line"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Dashboard Section -->
+      <section id="section-dashboard" class="section active">
+        <div class="page-header">
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-subtitle">Vista general de la plataforma</p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon purple">
+              <i class="ri-building-2-line"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Total Iglesias</h3>
+              <div class="stat-value" id="stat-total-tenants">0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">
+              <i class="ri-checkbox-circle-line"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Activas</h3>
+              <div class="stat-value" id="stat-active-tenants">0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon cyan">
+              <i class="ri-money-dollar-circle-line"></i>
+            </div>
+            <div class="stat-content">
+              <h3>MRR</h3>
+              <div class="stat-value" id="stat-mrr">$0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon orange">
+              <i class="ri-line-chart-line"></i>
+            </div>
+            <div class="stat-content">
+              <h3>ARR</h3>
+              <div class="stat-value" id="stat-arr">$0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Iglesias Recientes</h3>
+            </div>
+            <div class="card-body">
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Plan</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recent-tenants-tbody">
+                    <tr>
+                      <td colspan="3" class="empty-state">Cargando...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Estado del Sistema</h3>
+            </div>
+            <div class="card-body">
+              <div class="system-grid" style="grid-template-columns: 1fr;">
+                <div>
+                  <div class="flex items-center justify-between mb-4">
+                    <span class="system-label">CPU</span>
+                    <span id="cpu-value">0%</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div id="cpu-bar" class="progress-fill cyan" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <div class="flex items-center justify-between mb-4">
+                    <span class="system-label">Memoria</span>
+                    <span id="memory-value">0%</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div id="memory-bar" class="progress-fill purple" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <div class="flex items-center justify-between mb-4">
+                    <span class="system-label">Disco</span>
+                    <span id="disk-value">0%</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div id="disk-bar" class="progress-fill green" style="width: 0%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tenants Section -->
+      <section id="section-tenants" class="section">
+        <div class="page-header flex justify-between items-center">
+          <div>
+            <h1 class="page-title">Gestión de Iglesias</h1>
+            <p class="page-subtitle">Administra todas las iglesias en la plataforma</p>
+          </div>
+          <button class="btn btn-primary" onclick="openTenantModal()">
+            <i class="ri-add-line"></i>
+            Nueva Iglesia
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Iglesia</th>
+                    <th>Slug</th>
+                    <th>Base de Datos</th>
+                    <th>Plan</th>
+                    <th>Estado</th>
+                    <th>Creada</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tenants-tbody">
+                  <tr>
+                    <td colspan="7" class="empty-state">Cargando...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Plans Section -->
+      <section id="section-plans" class="section">
+        <div class="page-header flex justify-between items-center">
+          <div>
+            <h1 class="page-title">Planes de Suscripción</h1>
+            <p class="page-subtitle">Gestiona los planes disponibles para las iglesias</p>
+          </div>
+          <button class="btn btn-primary" onclick="openPlanModal()">
+            <i class="ri-add-line"></i>
+            Nuevo Plan
+          </button>
+        </div>
+
+        <div class="stats-grid" id="plans-grid">
+          <!-- Plans cards will be rendered here -->
+        </div>
+      </section>
+
+      <!-- Revenue Section -->
+      <section id="section-revenue" class="section">
+        <div class="page-header">
+          <h1 class="page-title">Ingresos</h1>
+          <p class="page-subtitle">Métricas financieras de la plataforma</p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon green">
+              <i class="ri-money-dollar-circle-line"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Ingresos Mensuales (MRR)</h3>
+              <div class="stat-value" id="revenue-mrr">$0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon cyan">
+              <i class="ri-calendar-line"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Ingresos Anuales (ARR)</h3>
+              <div class="stat-value" id="revenue-arr">$0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon purple">
+              <i class="ri-user-star-line"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Suscripciones Activas</h3>
+              <div class="stat-value" id="revenue-subs">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header">
+            <h3 class="card-title">Ingresos por Plan</h3>
+          </div>
+          <div class="card-body">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Plan</th>
+                    <th>Suscriptores</th>
+                    <th>Ingreso Mensual</th>
+                  </tr>
+                </thead>
+                <tbody id="revenue-by-plan-tbody">
+                  <tr>
+                    <td colspan="3" class="empty-state">Cargando...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- System Section -->
+      <section id="section-system" class="section">
+        <div class="page-header">
+          <h1 class="page-title">Monitoreo del Sistema</h1>
+          <p class="page-subtitle">Estado del servidor y recursos</p>
+        </div>
+
+        <div class="system-grid">
+          <div class="system-card">
+            <div class="system-card-header">
+              <div class="system-card-title">
+                <i class="ri-cpu-line"></i>
+                CPU
+              </div>
+              <span class="badge badge-success" id="cpu-status">Normal</span>
+            </div>
+            <div class="system-value" id="sys-cpu-percent">0%</div>
+            <div class="system-label" id="sys-cpu-cores">0 núcleos</div>
+            <div class="progress-bar mt-4">
+              <div id="sys-cpu-bar" class="progress-fill cyan" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <div class="system-card">
+            <div class="system-card-header">
+              <div class="system-card-title">
+                <i class="ri-database-2-line"></i>
+                Memoria RAM
+              </div>
+              <span class="badge badge-success" id="memory-status">Normal</span>
+            </div>
+            <div class="system-value" id="sys-memory-used">0 GB</div>
+            <div class="system-label" id="sys-memory-total">de 0 GB</div>
+            <div class="progress-bar mt-4">
+              <div id="sys-memory-bar" class="progress-fill purple" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <div class="system-card">
+            <div class="system-card-header">
+              <div class="system-card-title">
+                <i class="ri-hard-drive-2-line"></i>
+                Disco
+              </div>
+              <span class="badge badge-success" id="disk-status">Normal</span>
+            </div>
+            <div class="system-value" id="sys-disk-used">0 GB</div>
+            <div class="system-label" id="sys-disk-total">de 0 GB</div>
+            <div class="progress-bar mt-4">
+              <div id="sys-disk-bar" class="progress-fill green" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <div class="system-card">
+            <div class="system-card-header">
+              <div class="system-card-title">
+                <i class="ri-speed-line"></i>
+                Proceso App
+              </div>
+            </div>
+            <div class="system-value" id="sys-process-memory">0 MB</div>
+            <div class="system-label">Uso de memoria del proceso</div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header">
+            <h3 class="card-title">Bases de Datos</h3>
+          </div>
+          <div class="card-body">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Iglesia</th>
+                    <th>Base de Datos</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="databases-tbody">
+                  <tr>
+                    <td colspan="4" class="empty-state">Cargando...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Backups Section -->
+      <section id="section-backups" class="section">
+        <div class="page-header">
+          <h1 class="page-title">Gestión de Backups</h1>
+          <p class="page-subtitle">Copias de seguridad de las bases de datos</p>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Crear Nuevo Backup</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Seleccionar Iglesia</label>
+                <select id="backup-tenant-select" class="form-input">
+                  <option value="">-- Seleccionar --</option>
+                </select>
+              </div>
+              <div class="form-group" style="display: flex; align-items: flex-end;">
+                <button class="btn btn-primary" onclick="createBackup()">
+                  <i class="ri-save-3-line"></i>
+                  Crear Backup
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header">
+            <h3 class="card-title">Backups Disponibles</h3>
+          </div>
+          <div class="card-body">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Archivo</th>
+                    <th>Tamaño</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="backups-tbody">
+                  <tr>
+                    <td colspan="4" class="empty-state">Cargando...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal: Nueva Iglesia -->
+  <div id="tenant-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Nueva Iglesia</h3>
+        <button class="btn btn-ghost" onclick="closeTenantModal()">
+          <i class="ri-close-line"></i>
+        </button>
+      </div>
+      <form id="tenant-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Nombre de la Iglesia *</label>
+            <input type="text" name="name" class="form-input" placeholder="Iglesia Comunidad de Fe" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Slug (URL) *</label>
+            <input type="text" name="slug" class="form-input" placeholder="comunidad-de-fe" pattern="[a-z0-9-]+" required>
+            <small style="color: var(--text-muted);">Solo letras minúsculas, números y guiones</small>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Subdominio</label>
+            <input type="text" name="subdomain" class="form-input" placeholder="comunidadfe">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Plan</label>
+            <select name="plan_id" class="form-input" id="tenant-plan-select">
+              <option value="">Sin plan</option>
+            </select>
+          </div>
+          <hr style="border-color: var(--border); margin: 20px 0;">
+          <h4 style="margin-bottom: 16px;">Administrador de la Iglesia</h4>
+          <div class="form-group">
+            <label class="form-label">Email del Admin *</label>
+            <input type="email" name="admin_email" class="form-input" placeholder="admin@iglesia.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nombre del Admin *</label>
+            <input type="text" name="admin_name" class="form-input" placeholder="Juan Pérez" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contraseña *</label>
+            <input type="password" name="admin_password" class="form-input" placeholder="••••••••" required minlength="8">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeTenantModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="ri-add-line"></i>
+            Crear Iglesia
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Nuevo Plan -->
+  <div id="plan-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Nuevo Plan</h3>
+        <button class="btn btn-ghost" onclick="closePlanModal()">
+          <i class="ri-close-line"></i>
+        </button>
+      </div>
+      <form id="plan-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Nombre del Plan *</label>
+            <input type="text" name="name" class="form-input" placeholder="Plan Básico" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Descripción</label>
+            <textarea name="description" class="form-input" rows="3" placeholder="Descripción del plan..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Precio Mensual (COP)</label>
+              <input type="number" name="price_monthly" class="form-input" placeholder="50000" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Máx. Usuarios</label>
+              <input type="number" name="max_users" class="form-input" placeholder="10" min="1">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Almacenamiento (MB)</label>
+            <input type="number" name="max_storage_mb" class="form-input" placeholder="1024" min="100">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closePlanModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="ri-add-line"></i>
+            Crear Plan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ========================================
+    // CONFIGURATION
+    // ========================================
+    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:6076/api/superadmin'
+      : '/api/superadmin';
+
+    // ========================================
+    // STATE
+    // ========================================
+    const state = {
+      accessToken: localStorage.getItem('superadminToken') || null,
+      admin: JSON.parse(localStorage.getItem('superadmin') || 'null'),
+      tenants: [],
+      plans: [],
+    };
+
+    // ========================================
+    // TOAST
+    // ========================================
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `<i class="ri-${type === 'success' ? 'check' : type === 'error' ? 'close-circle' : 'information'}-line"></i><span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 5000);
+    }
+
+    // ========================================
+    // API
+    // ========================================
+    async function apiRequest(endpoint, options = {}) {
+      const url = `${API_BASE}${endpoint}`;
+      const headers = { 'Content-Type': 'application/json', ...options.headers };
+      
+      if (state.accessToken) {
+        headers['Authorization'] = `Bearer ${state.accessToken}`;
+      }
+
+      if (options.body && typeof options.body === 'object') {
+        options.body = JSON.stringify(options.body);
+      }
+
+      try {
+        const response = await fetch(url, { ...options, headers });
+        if (response.status === 401) {
+          logout();
+          return null;
+        }
+        return response;
+      } catch (error) {
+        console.error('API Error:', error);
+        throw error;
+      }
+    }
+
+    // ========================================
+    // AUTH
+    // ========================================
+    async function handleLogin(event) {
+      event.preventDefault();
+      const form = event.target;
+      const email = form.email.value;
+      const password = form.password.value;
+
+      try {
+        const response = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Credenciales inválidas');
+        }
+
+        const data = await response.json();
+        state.accessToken = data.access_token;
+        localStorage.setItem('superadminToken', data.access_token);
+        
+        showApp();
+        loadDashboard();
+        showToast('Bienvenido', 'success');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    function logout() {
+      state.accessToken = null;
+      state.admin = null;
+      localStorage.removeItem('superadminToken');
+      localStorage.removeItem('superadmin');
+      showLogin();
+    }
+
+    function showLogin() {
+      document.getElementById('login-page').classList.remove('hidden');
+      document.getElementById('admin-app').classList.add('hidden');
+    }
+
+    function showApp() {
+      document.getElementById('login-page').classList.add('hidden');
+      document.getElementById('admin-app').classList.remove('hidden');
+    }
+
+    // ========================================
+    // NAVIGATION
+    // ========================================
+    function navigateTo(section) {
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      
+      document.querySelector(`.nav-item[data-section="${section}"]`)?.classList.add('active');
+      document.getElementById(`section-${section}`)?.classList.add('active');
+
+      switch (section) {
+        case 'dashboard': loadDashboard(); break;
+        case 'tenants': loadTenants(); break;
+        case 'plans': loadPlans(); break;
+        case 'revenue': loadRevenue(); break;
+        case 'system': loadSystem(); break;
+        case 'backups': loadBackups(); break;
+      }
+    }
+
+    // ========================================
+    // DASHBOARD
+    // ========================================
+    async function loadDashboard() {
+      try {
+        // Stats
+        const statsRes = await apiRequest('/stats');
+        if (statsRes?.ok) {
+          const stats = await statsRes.json();
+          document.getElementById('stat-total-tenants').textContent = stats.total_tenants;
+          document.getElementById('stat-active-tenants').textContent = stats.active_tenants;
+        }
+
+        // Revenue
+        const revenueRes = await apiRequest('/revenue');
+        if (revenueRes?.ok) {
+          const revenue = await revenueRes.json();
+          document.getElementById('stat-mrr').textContent = formatCurrency(revenue.mrr);
+          document.getElementById('stat-arr').textContent = formatCurrency(revenue.arr);
+        }
+
+        // System
+        const systemRes = await apiRequest('/system/health');
+        if (systemRes?.ok) {
+          const system = await systemRes.json();
+          document.getElementById('cpu-value').textContent = system.cpu.usage_percent + '%';
+          document.getElementById('cpu-bar').style.width = system.cpu.usage_percent + '%';
+          document.getElementById('memory-value').textContent = system.memory.usage_percent + '%';
+          document.getElementById('memory-bar').style.width = system.memory.usage_percent + '%';
+          document.getElementById('disk-value').textContent = system.disk.usage_percent + '%';
+          document.getElementById('disk-bar').style.width = system.disk.usage_percent + '%';
+        }
+
+        // Recent tenants
+        const tenantsRes = await apiRequest('/tenants');
+        if (tenantsRes?.ok) {
+          const tenants = await tenantsRes.json();
+          renderRecentTenants(tenants.slice(0, 5));
+        }
+      } catch (error) {
+        console.error('Dashboard error:', error);
+      }
+    }
+
+    function renderRecentTenants(tenants) {
+      const tbody = document.getElementById('recent-tenants-tbody');
+      if (!tenants.length) {
+        tbody.innerHTML = '<tr><td colspan="3" class="empty-state">No hay iglesias</td></tr>';
+        return;
+      }
+      tbody.innerHTML = tenants.map(t => `
+        <tr>
+          <td>${t.name}</td>
+          <td><span class="badge badge-info">${t.plan_id || 'Sin plan'}</span></td>
+          <td><span class="badge ${t.is_active ? 'badge-success' : 'badge-danger'}">${t.is_active ? 'Activa' : 'Inactiva'}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    // ========================================
+    // TENANTS
+    // ========================================
+    async function loadTenants() {
+      try {
+        const response = await apiRequest('/tenants');
+        if (response?.ok) {
+          state.tenants = await response.json();
+          renderTenants(state.tenants);
+          populateBackupSelect();
+        }
+      } catch (error) {
+        console.error('Tenants error:', error);
+      }
+    }
+
+    function renderTenants(tenants) {
+      const tbody = document.getElementById('tenants-tbody');
+      if (!tenants.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="ri-building-line"></i><p>No hay iglesias registradas</p></td></tr>';
+        return;
+      }
+      tbody.innerHTML = tenants.map(t => `
+        <tr>
+          <td><strong>${t.name}</strong></td>
+          <td><code>${t.slug}</code></td>
+          <td><code style="font-size: 12px;">${t.db_name}</code></td>
+          <td><span class="badge badge-info">${t.plan_id || 'Sin plan'}</span></td>
+          <td><span class="badge ${t.is_active ? 'badge-success' : 'badge-danger'}">${t.is_active ? 'Activa' : 'Inactiva'}</span></td>
+          <td>${formatDate(t.created_at)}</td>
+          <td>
+            <button class="btn btn-ghost btn-sm" onclick="toggleTenant('${t.id}', ${!t.is_active})" title="${t.is_active ? 'Desactivar' : 'Activar'}">
+              <i class="ri-${t.is_active ? 'pause' : 'play'}-circle-line"></i>
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="createAdminForTenant('${t.id}')" title="Agregar admin">
+              <i class="ri-user-add-line"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openTenantModal() {
+      loadPlansForSelect();
+      document.getElementById('tenant-modal').classList.add('active');
+    }
+
+    function closeTenantModal() {
+      document.getElementById('tenant-modal').classList.remove('active');
+      document.getElementById('tenant-form').reset();
+    }
+
+    async function handleTenantSubmit(event) {
+      event.preventDefault();
+      const form = event.target;
+      
+      const tenantData = {
+        name: form.name.value,
+        slug: form.slug.value,
+        subdomain: form.subdomain.value || form.slug.value,
+        plan_id: form.plan_id.value ? parseInt(form.plan_id.value) : null,
+      };
+
+      try {
+        // Create tenant
+        const tenantRes = await apiRequest('/tenants', { method: 'POST', body: tenantData });
+        if (!tenantRes?.ok) {
+          const error = await tenantRes.json();
+          throw new Error(error.detail || 'Error al crear iglesia');
+        }
+        const tenant = await tenantRes.json();
+
+        // Create admin
+        const adminData = {
+          email: form.admin_email.value,
+          full_name: form.admin_name.value,
+          password: form.admin_password.value,
+        };
+        
+        const adminRes = await apiRequest(`/tenants/${tenant.id}/admins`, { method: 'POST', body: adminData });
+        if (!adminRes?.ok) {
+          showToast('Iglesia creada, pero hubo error al crear el admin', 'warning');
+        }
+
+        showToast('Iglesia creada exitosamente', 'success');
+        closeTenantModal();
+        loadTenants();
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    async function toggleTenant(id, isActive) {
+      try {
+        const response = await apiRequest(`/tenants/${id}`, {
+          method: 'PATCH',
+          body: { is_active: isActive }
+        });
+        if (response?.ok) {
+          showToast(`Iglesia ${isActive ? 'activada' : 'desactivada'}`, 'success');
+          loadTenants();
+        }
+      } catch (error) {
+        showToast('Error al actualizar', 'error');
+      }
+    }
+
+    async function createAdminForTenant(tenantId) {
+      const email = prompt('Email del nuevo administrador:');
+      if (!email) return;
+      
+      const name = prompt('Nombre completo:');
+      if (!name) return;
+      
+      const password = prompt('Contraseña (mín. 8 caracteres):');
+      if (!password || password.length < 8) {
+        showToast('La contraseña debe tener al menos 8 caracteres', 'error');
+        return;
+      }
+
+      try {
+        const response = await apiRequest(`/tenants/${tenantId}/admins`, {
+          method: 'POST',
+          body: { email, full_name: name, password }
+        });
+        if (response?.ok) {
+          showToast('Administrador creado exitosamente', 'success');
+        } else {
+          throw new Error('Error al crear administrador');
+        }
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    // ========================================
+    // PLANS
+    // ========================================
+    async function loadPlans() {
+      try {
+        const response = await apiRequest('/plans');
+        if (response?.ok) {
+          state.plans = await response.json();
+          renderPlans(state.plans);
+        }
+      } catch (error) {
+        console.error('Plans error:', error);
+      }
+    }
+
+    async function loadPlansForSelect() {
+      if (!state.plans.length) await loadPlans();
+      const select = document.getElementById('tenant-plan-select');
+      select.innerHTML = '<option value="">Sin plan</option>' +
+        state.plans.filter(p => p.is_active).map(p => 
+          `<option value="${p.id}">${p.name} - ${formatCurrency(p.price_monthly)}/mes</option>`
+        ).join('');
+    }
+
+    function renderPlans(plans) {
+      const grid = document.getElementById('plans-grid');
+      if (!plans.length) {
+        grid.innerHTML = '<div class="empty-state"><i class="ri-price-tag-3-line"></i><p>No hay planes</p></div>';
+        return;
+      }
+      grid.innerHTML = plans.map(p => `
+        <div class="stat-card" style="flex-direction: column; align-items: flex-start;">
+          <div class="flex items-center justify-between" style="width: 100%; margin-bottom: 16px;">
+            <h3 style="font-size: 18px; font-weight: 600;">${p.name}</h3>
+            <span class="badge ${p.is_active ? 'badge-success' : 'badge-danger'}">${p.is_active ? 'Activo' : 'Inactivo'}</span>
+          </div>
+          <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 12px;">${p.description || 'Sin descripción'}</p>
+          <div class="stat-value">${formatCurrency(p.price_monthly)}<span style="font-size: 14px; font-weight: 400;">/mes</span></div>
+          <div style="margin-top: 12px; font-size: 13px; color: var(--text-muted);">
+            <div><i class="ri-user-line"></i> Hasta ${p.max_users} usuarios</div>
+            <div><i class="ri-hard-drive-line"></i> ${p.max_storage_mb} MB almacenamiento</div>
+          </div>
+          <div class="flex gap-2 mt-4">
+            <button class="btn btn-secondary btn-sm" onclick="editPlan(${p.id})">
+              <i class="ri-edit-line"></i> Editar
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="togglePlan(${p.id}, ${!p.is_active})">
+              <i class="ri-${p.is_active ? 'close' : 'check'}-line"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openPlanModal() {
+      document.getElementById('plan-modal').classList.add('active');
+    }
+
+    function closePlanModal() {
+      document.getElementById('plan-modal').classList.remove('active');
+      document.getElementById('plan-form').reset();
+    }
+
+    async function handlePlanSubmit(event) {
+      event.preventDefault();
+      const form = event.target;
+      
+      const planData = {
+        name: form.name.value,
+        description: form.description.value || null,
+        price_monthly: parseFloat(form.price_monthly.value) || 0,
+        max_users: parseInt(form.max_users.value) || 10,
+        max_storage_mb: parseInt(form.max_storage_mb.value) || 1024,
+      };
+
+      try {
+        const response = await apiRequest('/plans', { method: 'POST', body: planData });
+        if (!response?.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Error al crear plan');
+        }
+        showToast('Plan creado exitosamente', 'success');
+        closePlanModal();
+        loadPlans();
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    async function togglePlan(id, isActive) {
+      try {
+        const response = await apiRequest(`/plans/${id}`, {
+          method: 'PATCH',
+          body: { is_active: isActive }
+        });
+        if (response?.ok) {
+          showToast(`Plan ${isActive ? 'activado' : 'desactivado'}`, 'success');
+          loadPlans();
+        }
+      } catch (error) {
+        showToast('Error al actualizar', 'error');
+      }
+    }
+
+    function editPlan(id) {
+      const plan = state.plans.find(p => p.id === id);
+      if (!plan) return;
+      
+      const newPrice = prompt('Nuevo precio mensual:', plan.price_monthly);
+      if (newPrice === null) return;
+
+      apiRequest(`/plans/${id}`, {
+        method: 'PATCH',
+        body: { price_monthly: parseFloat(newPrice) }
+      }).then(res => {
+        if (res?.ok) {
+          showToast('Plan actualizado', 'success');
+          loadPlans();
+        }
+      });
+    }
+
+    // ========================================
+    // REVENUE
+    // ========================================
+    async function loadRevenue() {
+      try {
+        const response = await apiRequest('/revenue');
+        if (response?.ok) {
+          const data = await response.json();
+          document.getElementById('revenue-mrr').textContent = formatCurrency(data.mrr);
+          document.getElementById('revenue-arr').textContent = formatCurrency(data.arr);
+          document.getElementById('revenue-subs').textContent = data.active_subscriptions;
+
+          const tbody = document.getElementById('revenue-by-plan-tbody');
+          const entries = Object.entries(data.by_plan);
+          if (!entries.length) {
+            tbody.innerHTML = '<tr><td colspan="3" class="empty-state">Sin datos</td></tr>';
+          } else {
+            tbody.innerHTML = entries.map(([plan, info]) => `
+              <tr>
+                <td>${plan}</td>
+                <td>${info.count}</td>
+                <td>${formatCurrency(info.revenue)}</td>
+              </tr>
+            `).join('');
+          }
+        }
+      } catch (error) {
+        console.error('Revenue error:', error);
+      }
+    }
+
+    // ========================================
+    // SYSTEM
+    // ========================================
+    async function loadSystem() {
+      try {
+        // Health
+        const healthRes = await apiRequest('/system/health');
+        if (healthRes?.ok) {
+          const data = await healthRes.json();
+          
+          // CPU
+          document.getElementById('sys-cpu-percent').textContent = data.cpu.usage_percent + '%';
+          document.getElementById('sys-cpu-cores').textContent = data.cpu.cores + ' núcleos';
+          document.getElementById('sys-cpu-bar').style.width = data.cpu.usage_percent + '%';
+          updateStatus('cpu', data.cpu.usage_percent);
+
+          // Memory
+          document.getElementById('sys-memory-used').textContent = data.memory.used_gb + ' GB';
+          document.getElementById('sys-memory-total').textContent = 'de ' + data.memory.total_gb + ' GB';
+          document.getElementById('sys-memory-bar').style.width = data.memory.usage_percent + '%';
+          updateStatus('memory', data.memory.usage_percent);
+
+          // Disk
+          document.getElementById('sys-disk-used').textContent = data.disk.used_gb + ' GB';
+          document.getElementById('sys-disk-total').textContent = 'de ' + data.disk.total_gb + ' GB';
+          document.getElementById('sys-disk-bar').style.width = data.disk.usage_percent + '%';
+          updateStatus('disk', data.disk.usage_percent);
+
+          // Process
+          document.getElementById('sys-process-memory').textContent = data.process.memory_mb + ' MB';
+        }
+
+        // Databases
+        const dbRes = await apiRequest('/system/databases');
+        if (dbRes?.ok) {
+          const data = await dbRes.json();
+          const tbody = document.getElementById('databases-tbody');
+          if (!data.databases.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No hay bases de datos</td></tr>';
+          } else {
+            tbody.innerHTML = data.databases.map(db => `
+              <tr>
+                <td>${db.tenant_name}</td>
+                <td><code>${db.db_name}</code></td>
+                <td><span class="badge ${db.is_active ? 'badge-success' : 'badge-danger'}">${db.is_active ? 'Activa' : 'Inactiva'}</span></td>
+                <td>
+                  <button class="btn btn-ghost btn-sm" onclick="createBackupFor('${db.tenant_id}')" title="Crear backup">
+                    <i class="ri-save-3-line"></i>
+                  </button>
+                </td>
+              </tr>
+            `).join('');
+          }
+        }
+      } catch (error) {
+        console.error('System error:', error);
+      }
+    }
+
+    function updateStatus(type, percent) {
+      const statusEl = document.getElementById(`${type}-status`);
+      const barEl = document.getElementById(`sys-${type}-bar`);
+      
+      if (percent < 60) {
+        statusEl.textContent = 'Normal';
+        statusEl.className = 'badge badge-success';
+        barEl.className = 'progress-fill green';
+      } else if (percent < 80) {
+        statusEl.textContent = 'Moderado';
+        statusEl.className = 'badge badge-warning';
+        barEl.className = 'progress-fill orange';
+      } else {
+        statusEl.textContent = 'Crítico';
+        statusEl.className = 'badge badge-danger';
+        barEl.className = 'progress-fill red';
+      }
+    }
+
+    // ========================================
+    // BACKUPS
+    // ========================================
+    async function loadBackups() {
+      if (!state.tenants.length) await loadTenants();
+      populateBackupSelect();
+
+      try {
+        const response = await apiRequest('/backups');
+        if (response?.ok) {
+          const data = await response.json();
+          renderBackups(data.backups);
+        }
+      } catch (error) {
+        console.error('Backups error:', error);
+      }
+    }
+
+    function populateBackupSelect() {
+      const select = document.getElementById('backup-tenant-select');
+      select.innerHTML = '<option value="">-- Seleccionar iglesia --</option>' +
+        state.tenants.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+    }
+
+    function renderBackups(backups) {
+      const tbody = document.getElementById('backups-tbody');
+      if (!backups.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><i class="ri-hard-drive-2-line"></i><p>No hay backups</p></td></tr>';
+        return;
+      }
+      tbody.innerHTML = backups.map(b => `
+        <tr>
+          <td><code>${b.filename}</code></td>
+          <td>${b.size_mb} MB</td>
+          <td>${formatDate(new Date(b.created_at * 1000))}</td>
+          <td>
+            <button class="btn btn-ghost btn-sm" onclick="deleteBackup('${b.filename}')" title="Eliminar">
+              <i class="ri-delete-bin-line text-red"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function createBackup() {
+      const tenantId = document.getElementById('backup-tenant-select').value;
+      if (!tenantId) {
+        showToast('Selecciona una iglesia', 'warning');
+        return;
+      }
+
+      showToast('Creando backup...', 'info');
+      
+      try {
+        const response = await apiRequest(`/backups/${tenantId}`, { method: 'POST' });
+        if (response?.ok) {
+          const data = await response.json();
+          showToast(`Backup creado: ${data.filename}`, 'success');
+          loadBackups();
+        } else {
+          const error = await response.json();
+          throw new Error(error.detail || 'Error al crear backup');
+        }
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    async function createBackupFor(tenantId) {
+      showToast('Creando backup...', 'info');
+      try {
+        const response = await apiRequest(`/backups/${tenantId}`, { method: 'POST' });
+        if (response?.ok) {
+          showToast('Backup creado exitosamente', 'success');
+        }
+      } catch (error) {
+        showToast('Error al crear backup', 'error');
+      }
+    }
+
+    async function deleteBackup(filename) {
+      if (!confirm(`¿Eliminar backup ${filename}?`)) return;
+      
+      try {
+        const response = await apiRequest(`/backups/${filename}`, { method: 'DELETE' });
+        if (response?.ok) {
+          showToast('Backup eliminado', 'success');
+          loadBackups();
+        }
+      } catch (error) {
+        showToast('Error al eliminar', 'error');
+      }
+    }
+
+    // ========================================
+    // UTILITIES
+    // ========================================
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0,
+      }).format(amount || 0);
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return '—';
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat('es-CO', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }).format(date);
+    }
+
+    // ========================================
+    // EVENT LISTENERS
+    // ========================================
+    document.getElementById('login-form').addEventListener('submit', handleLogin);
+    document.getElementById('tenant-form').addEventListener('submit', handleTenantSubmit);
+    document.getElementById('plan-form').addEventListener('submit', handlePlanSubmit);
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        navigateTo(item.dataset.section);
+      });
+    });
+
+    // Auto-refresh system stats
+    setInterval(() => {
+      if (document.getElementById('section-system').classList.contains('active')) {
+        loadSystem();
+      }
+    }, 30000);
+
+    // ========================================
+    // INIT
+    // ========================================
+    if (state.accessToken) {
+      showApp();
+      loadDashboard();
+    } else {
+      showLogin();
+    }
+  </script>
+</body>
+</html>
+
