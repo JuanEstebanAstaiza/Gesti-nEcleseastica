@@ -22,8 +22,7 @@ async def create_donation(
         {
             "type": "donation.created",
             "donation_id": donation.id,
-            "amount": float(donation.amount),
-            "donation_type": donation.donation_type,
+            "amount": float(donation.amount_total),
         }
     )
     return donation

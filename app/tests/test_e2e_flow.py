@@ -60,15 +60,19 @@ async def test_full_flow(async_client: AsyncClient):
     member_token = member_login.json()["access_token"]
     admin_token = admin_login.json()["access_token"]
 
-    # 3) Crear donación (miembro)
+    # 3) Crear donación (miembro) - Nuevo formato
     donation_payload = {
         "donor_name": "Juan",
         "donor_document": "123",
-        "donation_type": "diezmo",
-        "amount": "150.00",
-        "payment_method": "efectivo",
-        "note": "E2E",
+        "amount_tithe": 150.00,
+        "amount_offering": 0,
+        "amount_missions": 0,
+        "amount_special": 0,
+        "cash_amount": 150.00,
+        "transfer_amount": 0,
         "donation_date": "2025-01-02",
+        "note": "E2E",
+        "is_anonymous": False,
     }
     headers_member = {"Authorization": f"Bearer {member_token}"}
     donation_resp = await async_client.post("/api/donations", json=donation_payload, headers=headers_member)
@@ -95,5 +99,4 @@ async def test_full_flow(async_client: AsyncClient):
     summary = summary_resp.json()
     assert summary["total_donations"] == 1
     assert summary["total_amount"] == 150.0
-    assert summary["by_type"]["diezmo"] == 1
-
+    assert summary["by_type"]["diezmo"] == 150.0  # Ahora es monto, no conteo

@@ -1,35 +1,73 @@
 # Esquema de Base de Datos
 
-## Diagrama de Entidades
+## Arquitectura Multi-Tenant
+
+El sistema utiliza una arquitectura multi-tenant con bases de datos separadas:
 
 ```
-┌──────────────────┐       ┌──────────────────┐       ┌──────────────────┐
-│      users       │       │    donations     │       │    documents     │
-├──────────────────┤       ├──────────────────┤       ├──────────────────┤
-│ id (PK)          │───┐   │ id (PK)          │   ┌───│ id (PK)          │
-│ email (UNIQUE)   │   │   │ donor_name       │   │   │ file_name        │
-│ hashed_password  │   │   │ donor_document   │   │   │ stored_path      │
-│ full_name        │   │   │ donation_type    │   │   │ mime_type        │
-│ role             │   └──▶│ user_id (FK)     │   │   │ size_bytes       │
-│ is_active        │       │ amount           │◀──┼───│ donation_id (FK) │
-│ created_at       │       │ payment_method   │   │   │ user_id (FK)     │
-└──────────────────┘       │ donation_date    │   │   │ event_id (FK)    │
-        │                  │ note             │   │   │ checksum         │
-        │                  │ event_id (FK)    │───┼──▶│ description      │
-        │                  │ created_at       │   │   │ is_public        │
-        │                  └──────────────────┘   │   │ uploaded_at      │
-        │                                         │   └──────────────────┘
-        │                  ┌──────────────────┐   │
-        │                  │      events      │   │
-        │                  ├──────────────────┤   │
-        │                  │ id (PK)          │◀──┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           MASTER DATABASE                                │
+│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐               │
+│  │    tenants    │  │ super_admins  │  │  tenant_admins│               │
+│  └───────────────┘  └───────────────┘  └───────────────┘               │
+└─────────────────────────────────────────────────────────────────────────┘
+                              │
+         ┌────────────────────┼────────────────────┐
+         ▼                    ▼                    ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│  TENANT DB 1    │  │  TENANT DB 2    │  │  TENANT DB N    │
+│  (Iglesia A)    │  │  (Iglesia B)    │  │  (Iglesia N)    │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+```
+
+---
+
+## Diagrama de Entidades (Tenant DB)
+
+```
+┌──────────────────┐       ┌────────────────────────┐       ┌──────────────────┐
+│      users       │       │       donations        │       │    documents     │
+├──────────────────┤       ├────────────────────────┤       ├──────────────────┤
+│ id (PK)          │───┐   │ id (PK)                │   ┌───│ id (PK)          │
+│ email (UNIQUE)   │   │   │ donor_name             │   │   │ file_name        │
+│ hashed_password  │   │   │ donor_document         │   │   │ stored_path      │
+│ full_name        │   │   │ donor_address          │   │   │ mime_type        │
+│ role             │   └──▶│ user_id (FK)           │   │   │ size_bytes       │
+│ is_active        │       │ amount_tithe           │◀──┼───│ donation_id (FK) │
+│ created_at       │       │ amount_offering        │   │   │ user_id (FK)     │
+└──────────────────┘       │ amount_missions        │   │   │ checksum         │
+        │                  │ amount_special         │   │   │ uploaded_at      │
+        │                  │ amount_total           │   │   └──────────────────┘
+        │                  │ is_cash / is_transfer  │   │
+        │                  │ donation_date          │   │
+        │                  │ week_number            │   │
+        │                  │ receipt_number         │   │
+        │                  └────────────────────────┘   │
+        │                           │                   │
+        │                           ▼                   │
+        │                  ┌────────────────────────┐   │
+        │                  │  donation_summaries    │   │
+        │                  ├────────────────────────┤   │
+        │                  │ id (PK)                │   │
+        │                  │ summary_date           │   │
+        │                  │ week_number            │   │
+        │                  │ year                   │   │
+        │                  │ tithe_cash/transfer    │   │
+        │                  │ offering_cash/transfer │   │
+        │                  │ missions_cash/transfer │   │
+        │                  │ grand_total            │   │
+        │                  │ tithe_of_tithes        │   │
+        │                  │ witness_1/2_name       │   │
+        │                  └────────────────────────┘   │
+        │                                               │
+        │                  ┌──────────────────┐         │
+        │                  │      events      │         │
+        │                  ├──────────────────┤         │
+        │                  │ id (PK)          │◀────────┘
         └─────────────────▶│ created_by_id(FK)│
                            │ name             │
-                           │ description      │
-                           │ start_date       │
-                           │ end_date         │
                            │ capacity         │
-                           │ created_at       │
+                           │ start_date       │
                            └──────────────────┘
                                     │
                                     ▼
@@ -40,231 +78,280 @@
                            │ event_id (FK)    │
                            │ attendee_name    │
                            │ attendee_email   │
-                           │ notes            │
                            │ is_cancelled     │
-                           │ registered_at    │
                            └──────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════
+
+                         MÓDULO DE GASTOS
+
+┌────────────────────┐     ┌────────────────────┐     ┌────────────────────┐
+│ expense_categories │     │      expenses      │     │ expense_documents  │
+├────────────────────┤     ├────────────────────┤     ├────────────────────┤
+│ id (PK)            │◀────│ category_id (FK)   │     │ id (PK)            │
+│ name               │     │ subcategory_id(FK) │────▶│ expense_id (FK)    │
+│ description        │     │ description        │     │ file_name          │
+│ color              │     │ amount             │     │ stored_path        │
+│ icon               │     │ expense_date       │     │ mime_type          │
+│ monthly_budget     │     │ vendor_name        │     │ document_type      │
+│ is_active          │     │ payment_method     │     │ uploaded_at        │
+└────────────────────┘     │ status             │     └────────────────────┘
+         │                 │ created_by_id (FK) │
+         ▼                 │ approved_by_id(FK) │
+┌────────────────────┐     │ tags (JSONB)       │
+│expense_subcategories│     └────────────────────┘
+├────────────────────┤
+│ id (PK)            │     ┌────────────────────┐
+│ category_id (FK)   │     │   expense_tags     │
+│ name               │     ├────────────────────┤
+│ is_active          │     │ id (PK)            │
+└────────────────────┘     │ name (UNIQUE)      │
+                           │ color              │
+┌────────────────────┐     └────────────────────┘
+│  expense_folders   │
+├────────────────────┤
+│ id (PK)            │
+│ name               │
+│ parent_id (FK)     │
+│ folder_type        │
+│ year / month       │
+└────────────────────┘
 ```
 
-## Tipos ENUM
+---
 
-### user_role
-
-```sql
-CREATE TYPE user_role AS ENUM ('public', 'member', 'admin');
-```
-
-### donation_type
-
-```sql
-CREATE TYPE donation_type AS ENUM ('diezmo', 'ofrenda', 'misiones', 'especial');
-```
-
-### payment_method
-
-```sql
-CREATE TYPE payment_method AS ENUM ('efectivo', 'transferencia', 'tarjeta', 'otro');
-```
-
-## Tablas
-
-### users
-
-| Columna | Tipo | Constraints | Descripción |
-|---------|------|-------------|-------------|
-| id | SERIAL | PRIMARY KEY | ID único |
-| email | VARCHAR(255) | NOT NULL, UNIQUE | Correo electrónico |
-| hashed_password | VARCHAR(255) | NOT NULL | Contraseña hasheada (bcrypt) |
-| full_name | VARCHAR(255) | | Nombre completo |
-| role | user_role | DEFAULT 'member' | Rol del usuario |
-| is_active | BOOLEAN | DEFAULT TRUE | Estado activo |
-| created_at | TIMESTAMPTZ | DEFAULT NOW() | Fecha de creación |
-
-**Índices**:
-- `users_email_key` (UNIQUE) en `email`
+## Tablas de Donaciones (Formato Actualizado)
 
 ### donations
 
 | Columna | Tipo | Constraints | Descripción |
 |---------|------|-------------|-------------|
 | id | SERIAL | PRIMARY KEY | ID único |
-| donor_name | VARCHAR(255) | NOT NULL | Nombre del donante |
-| donor_document | VARCHAR(50) | | Documento de identidad |
-| donation_type | donation_type | NOT NULL | Tipo de donación |
-| user_id | INTEGER | REFERENCES users(id) | Usuario que registró |
-| amount | NUMERIC(12,2) | NOT NULL | Monto de la donación |
-| payment_method | payment_method | NOT NULL | Método de pago |
-| donation_date | DATE | NOT NULL | Fecha de la donación |
-| note | TEXT | | Nota adicional |
+| user_id | INTEGER | REFERENCES users(id) | Usuario donante (opcional) |
 | event_id | INTEGER | REFERENCES events(id) | Evento relacionado |
+| donor_name | VARCHAR(255) | NOT NULL | Nombre del donante |
+| donor_document | VARCHAR(50) | | Cédula/NIT |
+| donor_address | VARCHAR(500) | | Dirección |
+| donor_phone | VARCHAR(50) | | Teléfono |
+| donor_email | VARCHAR(255) | | Email |
+| **amount_tithe** | NUMERIC(12,2) | DEFAULT 0 | **Monto de Diezmo** |
+| **amount_offering** | NUMERIC(12,2) | DEFAULT 0 | **Monto de Ofrenda** |
+| **amount_missions** | NUMERIC(12,2) | DEFAULT 0 | **Monto de Misiones** |
+| **amount_special** | NUMERIC(12,2) | DEFAULT 0 | **Monto Especial** |
+| **amount_total** | NUMERIC(12,2) | NOT NULL | **Total de la donación** |
+| is_cash | BOOLEAN | DEFAULT TRUE | ¿Es efectivo? |
+| is_transfer | BOOLEAN | DEFAULT FALSE | ¿Es transferencia? |
+| payment_reference | VARCHAR(100) | | Referencia de pago |
+| donation_date | DATE | NOT NULL | Fecha de la donación |
+| week_number | INTEGER | | Número de semana |
+| envelope_number | VARCHAR(50) | | Número de sobre |
+| receipt_number | VARCHAR(50) | UNIQUE | Número de recibo |
+| is_anonymous | BOOLEAN | DEFAULT FALSE | Donación anónima (OSI) |
+| created_by_id | INTEGER | REFERENCES users(id) | Quien registró |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | Fecha de registro |
 
 **Índices**:
-- `idx_donations_user_id` en `user_id`
-- `idx_donations_donation_date` en `donation_date`
-- `idx_donations_type` en `donation_type`
+- `idx_donations_user` en `user_id`
+- `idx_donations_date` en `donation_date`
+- `idx_donations_week` en `week_number`
 
-### documents
+### donation_summaries
+
+Resumen semanal para reportes a contaduría.
 
 | Columna | Tipo | Constraints | Descripción |
 |---------|------|-------------|-------------|
 | id | SERIAL | PRIMARY KEY | ID único |
-| file_name | VARCHAR(255) | NOT NULL | Nombre original del archivo |
-| stored_path | VARCHAR(500) | NOT NULL | Ruta de almacenamiento |
+| summary_date | DATE | NOT NULL | Fecha del resumen |
+| week_number | INTEGER | NOT NULL | Semana del año |
+| year | INTEGER | NOT NULL | Año |
+| envelope_count | INTEGER | DEFAULT 0 | Cantidad de sobres |
+| tithe_cash | NUMERIC(12,2) | DEFAULT 0 | Diezmos en efectivo |
+| tithe_transfer | NUMERIC(12,2) | DEFAULT 0 | Diezmos por transferencia |
+| offering_cash | NUMERIC(12,2) | DEFAULT 0 | Ofrendas en efectivo |
+| offering_transfer | NUMERIC(12,2) | DEFAULT 0 | Ofrendas por transferencia |
+| missions_cash | NUMERIC(12,2) | DEFAULT 0 | Misiones en efectivo |
+| missions_transfer | NUMERIC(12,2) | DEFAULT 0 | Misiones por transferencia |
+| total_cash | NUMERIC(12,2) | DEFAULT 0 | Total efectivo |
+| total_transfer | NUMERIC(12,2) | DEFAULT 0 | Total transferencias |
+| grand_total | NUMERIC(12,2) | DEFAULT 0 | Gran total |
+| **tithe_of_tithes** | NUMERIC(12,2) | DEFAULT 0 | **Diezmo de diezmos (10%)** |
+| witness_1_name | VARCHAR(255) | | Nombre testigo 1 |
+| witness_1_document | VARCHAR(50) | | Documento testigo 1 |
+| witness_2_name | VARCHAR(255) | | Nombre testigo 2 |
+| witness_2_document | VARCHAR(50) | | Documento testigo 2 |
+| is_closed | BOOLEAN | DEFAULT FALSE | ¿Semana cerrada? |
+| closed_at | TIMESTAMPTZ | | Fecha de cierre |
+
+**Constraint único**: `(year, week_number)`
+
+---
+
+## Tablas de Gastos
+
+### expense_categories
+
+| Columna | Tipo | Constraints | Descripción |
+|---------|------|-------------|-------------|
+| id | SERIAL | PRIMARY KEY | ID único |
+| name | VARCHAR(100) | NOT NULL | Nombre de categoría |
+| description | TEXT | | Descripción |
+| color | VARCHAR(7) | DEFAULT '#6b7280' | Color hex para UI |
+| icon | VARCHAR(50) | | Icono (Remix Icons) |
+| monthly_budget | NUMERIC(12,2) | | Presupuesto mensual |
+| is_active | BOOLEAN | DEFAULT TRUE | Estado activo |
+| sort_order | INTEGER | DEFAULT 0 | Orden de display |
+
+**Categorías predeterminadas**:
+- Servicios Públicos
+- Arriendo
+- Salarios
+- Mantenimiento
+- Suministros
+- Eventos
+- Transporte
+- Misiones
+- Otros
+
+### expense_subcategories
+
+| Columna | Tipo | Constraints | Descripción |
+|---------|------|-------------|-------------|
+| id | SERIAL | PRIMARY KEY | ID único |
+| category_id | INTEGER | FK expense_categories | Categoría padre |
+| name | VARCHAR(100) | NOT NULL | Nombre |
+| description | TEXT | | Descripción |
+| is_active | BOOLEAN | DEFAULT TRUE | Estado activo |
+
+### expense_tags
+
+| Columna | Tipo | Constraints | Descripción |
+|---------|------|-------------|-------------|
+| id | SERIAL | PRIMARY KEY | ID único |
+| name | VARCHAR(50) | UNIQUE NOT NULL | Nombre de etiqueta |
+| color | VARCHAR(7) | DEFAULT '#3b82f6' | Color hex |
+
+**Etiquetas predeterminadas**:
+- Urgente (rojo)
+- Recurrente (violeta)
+- Deducible (verde)
+- Pendiente aprobación (amarillo)
+
+### expenses
+
+| Columna | Tipo | Constraints | Descripción |
+|---------|------|-------------|-------------|
+| id | SERIAL | PRIMARY KEY | ID único |
+| category_id | INTEGER | FK NOT NULL | Categoría |
+| subcategory_id | INTEGER | FK | Subcategoría |
+| description | VARCHAR(500) | NOT NULL | Descripción del gasto |
+| amount | NUMERIC(12,2) | NOT NULL | Monto |
+| expense_date | DATE | NOT NULL | Fecha del gasto |
+| vendor_name | VARCHAR(255) | | Proveedor |
+| vendor_document | VARCHAR(50) | | NIT/Cédula proveedor |
+| vendor_phone | VARCHAR(50) | | Teléfono proveedor |
+| payment_method | VARCHAR(50) | DEFAULT 'efectivo' | Método de pago |
+| payment_reference | VARCHAR(100) | | Referencia de pago |
+| bank_account | VARCHAR(100) | | Cuenta bancaria |
+| invoice_number | VARCHAR(50) | | Número de factura |
+| receipt_number | VARCHAR(50) | | Número de recibo |
+| status | VARCHAR(20) | DEFAULT 'pending' | Estado |
+| is_recurring | BOOLEAN | DEFAULT FALSE | ¿Es recurrente? |
+| recurrence_period | VARCHAR(20) | | Período (monthly, weekly) |
+| tags | JSONB | | IDs de etiquetas |
+| notes | TEXT | | Notas |
+| created_by_id | INTEGER | FK NOT NULL | Creado por |
+| approved_by_id | INTEGER | FK | Aprobado por |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | Fecha creación |
+| approved_at | TIMESTAMPTZ | | Fecha aprobación |
+
+**Estados posibles**: `pending`, `approved`, `paid`, `cancelled`
+
+### expense_documents
+
+| Columna | Tipo | Constraints | Descripción |
+|---------|------|-------------|-------------|
+| id | SERIAL | PRIMARY KEY | ID único |
+| expense_id | INTEGER | FK ON DELETE CASCADE | Gasto |
+| file_name | VARCHAR(255) | NOT NULL | Nombre archivo |
+| stored_path | VARCHAR(500) | NOT NULL | Ruta almacenamiento |
 | mime_type | VARCHAR(100) | NOT NULL | Tipo MIME |
-| size_bytes | INTEGER | NOT NULL | Tamaño en bytes |
-| checksum | VARCHAR(64) | | SHA-256 del archivo |
+| size_bytes | INTEGER | NOT NULL | Tamaño |
+| checksum | VARCHAR(64) | | SHA-256 |
+| document_type | VARCHAR(50) | DEFAULT 'invoice' | Tipo documento |
 | description | TEXT | | Descripción |
-| is_public | BOOLEAN | DEFAULT FALSE | Visibilidad pública |
-| donation_id | INTEGER | REFERENCES donations(id) | Donación relacionada |
-| user_id | INTEGER | REFERENCES users(id) | Usuario que subió |
-| event_id | INTEGER | REFERENCES events(id) | Evento relacionado |
-| uploaded_at | TIMESTAMPTZ | DEFAULT NOW() | Fecha de subida |
+| uploaded_by_id | INTEGER | FK | Subido por |
+| uploaded_at | TIMESTAMPTZ | DEFAULT NOW() | Fecha subida |
 
-**Índices**:
-- `idx_documents_donation_id` en `donation_id`
-- `idx_documents_user_id` en `user_id`
+**Tipos de documento**: `invoice`, `receipt`, `quote`, `contract`, `other`
 
-### events
+### expense_folders
 
 | Columna | Tipo | Constraints | Descripción |
 |---------|------|-------------|-------------|
 | id | SERIAL | PRIMARY KEY | ID único |
-| name | VARCHAR(255) | NOT NULL | Nombre del evento |
+| name | VARCHAR(100) | NOT NULL | Nombre carpeta |
 | description | TEXT | | Descripción |
-| start_date | DATE | | Fecha de inicio |
-| end_date | DATE | | Fecha de fin |
-| capacity | INTEGER | | Capacidad máxima |
-| created_by_id | INTEGER | REFERENCES users(id) | Creador del evento |
-| created_at | TIMESTAMPTZ | DEFAULT NOW() | Fecha de creación |
+| parent_id | INTEGER | FK self | Carpeta padre |
+| folder_type | VARCHAR(50) | DEFAULT 'general' | Tipo |
+| year | INTEGER | | Año (para carpetas período) |
+| month | INTEGER | | Mes (para carpetas período) |
+| is_active | BOOLEAN | DEFAULT TRUE | Estado activo |
 
-**Índices**:
-- `idx_events_created_by` en `created_by_id`
-- `idx_events_dates` en `start_date, end_date`
+---
 
-### registrations
+## Formato de Reportes
 
-| Columna | Tipo | Constraints | Descripción |
-|---------|------|-------------|-------------|
-| id | SERIAL | PRIMARY KEY | ID único |
-| event_id | INTEGER | REFERENCES events(id) ON DELETE CASCADE | Evento |
-| attendee_name | VARCHAR(255) | NOT NULL | Nombre del asistente |
-| attendee_email | VARCHAR(255) | NOT NULL | Email del asistente |
-| notes | TEXT | | Notas adicionales |
-| is_cancelled | BOOLEAN | DEFAULT FALSE | Estado de cancelación |
-| registered_at | TIMESTAMPTZ | DEFAULT NOW() | Fecha de registro |
+### Reporte Mensual de Donaciones (CSV)
 
-**Índices**:
-- `idx_registrations_event_id` en `event_id`
-- `idx_registrations_email` en `attendee_email`
-
-**Constraint único**:
-- `uq_registration_event_email` en `(event_id, attendee_email)` WHERE `is_cancelled = FALSE`
-
-## Script de Inicialización
-
-El esquema se inicializa automáticamente desde `app/db/sql/initial_schema.sql`:
-
-```sql
--- Tipos ENUM
-CREATE TYPE user_role AS ENUM ('public', 'member', 'admin');
-CREATE TYPE donation_type AS ENUM ('diezmo', 'ofrenda', 'misiones', 'especial');
-CREATE TYPE payment_method AS ENUM ('efectivo', 'transferencia', 'tarjeta', 'otro');
-
--- Tabla users
-CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    hashed_password VARCHAR(255) NOT NULL,
-    full_name VARCHAR(255),
-    role user_role DEFAULT 'member',
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Tabla events
-CREATE TABLE IF NOT EXISTS events (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    start_date DATE,
-    end_date DATE,
-    capacity INTEGER,
-    created_by_id INTEGER REFERENCES users(id),
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Tabla donations
-CREATE TABLE IF NOT EXISTS donations (
-    id SERIAL PRIMARY KEY,
-    donor_name VARCHAR(255) NOT NULL,
-    donor_document VARCHAR(50),
-    donation_type donation_type NOT NULL,
-    user_id INTEGER REFERENCES users(id),
-    amount NUMERIC(12,2) NOT NULL,
-    payment_method payment_method NOT NULL,
-    donation_date DATE NOT NULL,
-    note TEXT,
-    event_id INTEGER REFERENCES events(id),
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Tabla documents
-CREATE TABLE IF NOT EXISTS documents (
-    id SERIAL PRIMARY KEY,
-    file_name VARCHAR(255) NOT NULL,
-    stored_path VARCHAR(500) NOT NULL,
-    mime_type VARCHAR(100) NOT NULL,
-    size_bytes INTEGER NOT NULL,
-    checksum VARCHAR(64),
-    description TEXT,
-    is_public BOOLEAN DEFAULT FALSE,
-    donation_id INTEGER REFERENCES donations(id),
-    user_id INTEGER REFERENCES users(id),
-    event_id INTEGER REFERENCES events(id),
-    uploaded_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Tabla registrations
-CREATE TABLE IF NOT EXISTS registrations (
-    id SERIAL PRIMARY KEY,
-    event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-    attendee_name VARCHAR(255) NOT NULL,
-    attendee_email VARCHAR(255) NOT NULL,
-    notes TEXT,
-    is_cancelled BOOLEAN DEFAULT FALSE,
-    registered_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Índices
-CREATE INDEX IF NOT EXISTS idx_donations_user_id ON donations(user_id);
-CREATE INDEX IF NOT EXISTS idx_donations_donation_date ON donations(donation_date);
-CREATE INDEX IF NOT EXISTS idx_documents_donation_id ON documents(donation_id);
-CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
-CREATE INDEX IF NOT EXISTS idx_events_created_by ON events(created_by_id);
-CREATE INDEX IF NOT EXISTS idx_registrations_event_id ON registrations(event_id);
+```csv
+NOVIEMBRE,NOMBRE,EFECTIVO,TRANSFERENCIA,DOCUMENTO,DIEZMO,OFRENDA,MISIONES,TOTAL
+01/11/2025,Carmen Elisa Rocha,,,$60,000.00,,,$60,000.00
+01/11/2025,OSI,,$35,000.00,,$35,000.00,,,$35,000.00
+...
+TOTAL,,$930,000.00,,$1,421,000.00,$50,000.00,$2,401,000.00
 ```
+
+### Reporte Semanal para Contadora
+
+```
+RELACIÓN DE DIEZMOS Y OFRENDAS
+
+FECHA: 15/11/2025    SEMANA: 46
+NÚMERO DE SOBRES: 25
+
+CONCEPTO      | EFECTIVO    | TRANSFERENCIA | TOTAL
+DIEZMOS       | $500,000    | $300,000      | $800,000
+OFRENDAS      | $200,000    | $100,000      | $300,000
+MISIONES      | $50,000     | $0            | $50,000
+VALOR TOTAL   | $750,000    | $400,000      | $1,150,000
+
+DIEZMOS DE DIEZMOS: $80,000
+
+TESTIGO 1: ________________
+TESTIGO 2: ________________
+```
+
+---
 
 ## Migraciones
 
-No se utiliza Alembic. Los cambios al esquema se realizan mediante:
+Los cambios al esquema se realizan mediante scripts SQL en `app/db/sql/`:
 
-1. Crear nuevo script SQL en `app/db/sql/`
-2. Aplicar manualmente o en deploy:
-   ```bash
-   docker exec ekklesia_db psql -U ekklesia -d ekklesia -f /path/to/migration.sql
-   ```
+```bash
+# Aplicar schema de tenant
+docker exec ekklesia_db psql -U ekklesia -d ekklesia -f /code/app/db/sql/tenant_schema.sql
+
+# Aplicar schema master
+docker exec ekklesia_master_db psql -U ekklesia -d ekklesia_master -f /code/app/db/sql/master_schema.sql
+```
 
 ## Backup y Restauración
 
-### Backup
-
-  ```bash
-docker exec ekklesia_db pg_dump -U ekklesia ekklesia > backup.sql
-  ```
-
-### Restauración
-
 ```bash
-cat backup.sql | docker exec -i ekklesia_db psql -U ekklesia -d ekklesia
+# Backup
+docker exec ekklesia_db pg_dump -U ekklesia ekklesia > backup_tenant.sql
+
+# Restauración
+cat backup_tenant.sql | docker exec -i ekklesia_db psql -U ekklesia -d ekklesia
 ```

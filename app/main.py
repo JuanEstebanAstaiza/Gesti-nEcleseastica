@@ -3,16 +3,19 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router as api_router
 from app.core.config import settings
+from app.core.tenant import TenantMiddleware
 
 
 def create_application() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
-        version="0.1.0",
-        description="Gestión administrativa eclesiástica - backend FastAPI",
+        version="1.0.0",
+        description="Ekklesia - Plataforma SaaS Multi-tenant para Gestión Eclesiástica",
+        docs_url="/docs",
+        redoc_url="/redoc",
     )
 
-    # CORS configuration for separated frontend
+    # CORS configuration - permite cualquier subdominio de ekklesia
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
@@ -21,10 +24,15 @@ def create_application() -> FastAPI:
             "http://localhost",
             "http://127.0.0.1",
         ],
+        allow_origin_regex=r"https?://.*\.ekklesia\.app",  # Subdominios en producción
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["X-Tenant-ID"],
     )
+
+    # Tenant middleware para multi-tenancy
+    # app.add_middleware(TenantMiddleware)  # Descomentar cuando esté listo
 
     app.include_router(api_router, prefix="/api")
     return app

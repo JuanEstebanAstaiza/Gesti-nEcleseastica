@@ -14,16 +14,198 @@
   <!-- Toast Container -->
   <div id="toast-container" class="toast-container"></div>
 
-  <!-- Auth Modal -->
-  <div id="auth-modal" class="modal">
+  <!-- =====================================================
+       LANDING PAGE - Vista Pública
+       ===================================================== -->
+  <div id="landing-page" class="landing-page">
+    <!-- Header Público -->
+    <header class="public-header">
+      <div class="header-container">
+        <div class="header-brand">
+          <div class="header-logo">
+            <i class="ri-hand-heart-line"></i>
+          </div>
+          <span class="header-name">Ekklesia</span>
+        </div>
+        <nav class="header-nav">
+          <a href="#" class="nav-link active" data-page="home">Inicio</a>
+          <a href="#" class="nav-link" data-page="about">Nosotros</a>
+          <a href="#" class="nav-link" data-page="events">Eventos</a>
+          <a href="#" class="nav-link" data-page="donate">Donar</a>
+        </nav>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="btn-login">
+            <i class="ri-user-line"></i>
+            <span>Ingresar</span>
+          </button>
+        </div>
+        <button class="mobile-menu-btn" id="mobile-menu-btn">
+          <i class="ri-menu-line"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <main id="page-home" class="public-page active">
+      <section class="hero-section">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+          <h1>Bienvenido a Nuestra Iglesia</h1>
+          <p class="hero-slogan">Un lugar de fe, esperanza y amor</p>
+          <div class="hero-buttons">
+            <button class="btn btn-primary btn-lg" data-page="events">
+              <i class="ri-calendar-line"></i>
+              <span>Próximos Eventos</span>
+            </button>
+            <button class="btn btn-outline btn-lg" data-page="donate">
+              <i class="ri-heart-line"></i>
+              <span>Cómo Donar</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Service Times -->
+      <section class="section section-services">
+        <div class="container">
+          <h2 class="section-title">Horarios de Servicio</h2>
+          <div class="services-grid">
+            <div class="service-card">
+              <i class="ri-sun-line"></i>
+              <h3>Domingo</h3>
+              <p>9:00 AM - Escuela Dominical</p>
+              <p>11:00 AM - Culto Principal</p>
+            </div>
+            <div class="service-card">
+              <i class="ri-moon-line"></i>
+              <h3>Miércoles</h3>
+              <p>7:00 PM - Estudio Bíblico</p>
+            </div>
+            <div class="service-card">
+              <i class="ri-group-line"></i>
+              <h3>Viernes</h3>
+              <p>7:00 PM - Reunión de Jóvenes</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Featured Events -->
+      <section class="section section-events-preview">
+        <div class="container">
+          <h2 class="section-title">Próximos Eventos</h2>
+          <div class="events-preview-grid" id="featured-events">
+            <p class="empty-message">Cargando eventos...</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Page: ABOUT -->
+    <main id="page-about" class="public-page">
+      <section class="page-hero">
+        <h1>Quiénes Somos</h1>
+      </section>
+      <section class="section">
+        <div class="container container-narrow">
+          <div class="about-content">
+            <h2>Nuestra Misión</h2>
+            <p>Predicar el evangelio de Jesucristo, formar discípulos y servir a nuestra comunidad con amor.</p>
+            <h2>Nuestra Visión</h2>
+            <p>Ser una iglesia que transforma vidas a través del poder del evangelio.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Page: EVENTS -->
+    <main id="page-events" class="public-page">
+      <section class="page-hero">
+        <h1>Eventos</h1>
+      </section>
+      <section class="section">
+        <div class="container">
+          <div class="events-list" id="public-events-list">
+            <div class="loading-state">
+              <i class="ri-loader-4-line spin"></i>
+              <p>Cargando eventos...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Page: DONATE -->
+    <main id="page-donate" class="public-page">
+      <section class="page-hero">
+        <h1>Cómo Donar</h1>
+        <p>"Honra al Señor con tus riquezas" - Proverbios 3:9</p>
+      </section>
+      <section class="section">
+        <div class="container container-narrow">
+          <div class="donation-types">
+            <div class="donation-type-card">
+              <div class="donation-icon"><i class="ri-heart-3-fill"></i></div>
+              <h3>Diezmo</h3>
+              <p>El 10% de tus ingresos como acto de fe y obediencia</p>
+            </div>
+            <div class="donation-type-card">
+              <div class="donation-icon"><i class="ri-gift-fill"></i></div>
+              <h3>Ofrenda</h3>
+              <p>Tu ofrenda voluntaria para el sostenimiento de la obra</p>
+            </div>
+            <div class="donation-type-card">
+              <div class="donation-icon"><i class="ri-earth-fill"></i></div>
+              <h3>Misiones</h3>
+              <p>Apoya la expansión del evangelio alrededor del mundo</p>
+            </div>
+          </div>
+          <div class="payment-methods-section">
+            <h2>Métodos de Pago</h2>
+            <div class="payment-methods">
+              <div class="payment-method-card">
+                <i class="ri-bank-line"></i>
+                <h4>Transferencia Bancaria</h4>
+                <p>Banco: Bancolombia<br>Cuenta: 123-456789-00<br>Tipo: Ahorros</p>
+              </div>
+              <div class="payment-method-card">
+                <i class="ri-hand-coin-line"></i>
+                <h4>Presencial</h4>
+                <p>Durante los servicios dominicales</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="public-footer">
+      <div class="footer-container">
+        <div class="footer-brand">
+          <i class="ri-hand-heart-line"></i>
+          <span>Ekklesia</span>
+        </div>
+        <p class="footer-copy">© 2024 Powered by <strong>Ekklesia</strong></p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- =====================================================
+       MODAL DE LOGIN/REGISTRO
+       ===================================================== -->
+  <div id="auth-modal" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-content auth-modal-content">
+      <button class="modal-close" id="auth-modal-close">
+        <i class="ri-close-line"></i>
+      </button>
       <div class="auth-brand">
         <div class="auth-logo">
           <i class="ri-hand-heart-line"></i>
         </div>
-        <h1>Ekklesia</h1>
-        <p>Sistema de Gestión Eclesiástica</p>
+        <h2>Ekklesia</h2>
+        <p>Ingresa a tu cuenta</p>
       </div>
 
       <div class="auth-tabs">
@@ -57,7 +239,7 @@
           <label for="register-name">Nombre completo</label>
           <div class="input-wrapper">
             <i class="ri-user-line"></i>
-            <input type="text" id="register-name" name="full_name" placeholder="Juan Pérez" required />
+            <input type="text" id="register-name" name="full_name" placeholder="Tu nombre" required />
           </div>
         </div>
         <div class="form-group">
@@ -82,8 +264,44 @@
     </div>
   </div>
 
-  <!-- Main App -->
-  <div id="app" class="app hidden">
+  <!-- Modal de Inscripción a Evento -->
+  <div id="registration-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Inscribirse al Evento</h3>
+        <button class="btn btn-ghost btn-icon modal-close-btn">
+          <i class="ri-close-line"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="registration-form">
+          <input type="hidden" id="reg-event-id" name="event_id" />
+          <div class="form-group">
+            <label for="reg-name">Nombre completo</label>
+            <input type="text" id="reg-name" name="attendee_name" required />
+          </div>
+          <div class="form-group">
+            <label for="reg-email">Correo electrónico</label>
+            <input type="email" id="reg-email" name="attendee_email" required />
+          </div>
+          <div class="form-group">
+            <label for="reg-notes">Notas (opcional)</label>
+            <textarea id="reg-notes" name="notes" rows="2"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary modal-close-btn">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Confirmar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================
+       PANEL DE USUARIO (APP)
+       ===================================================== -->
+  <div id="user-app" class="app hidden">
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
@@ -92,34 +310,47 @@
         </div>
         <div class="sidebar-brand">
           <h2>Ekklesia</h2>
-          <span class="sidebar-subtitle">Panel de Gestión</span>
+          <span class="sidebar-subtitle">Mi Panel</span>
         </div>
       </div>
 
       <nav class="sidebar-nav">
         <a href="#" class="nav-item active" data-section="dashboard">
           <i class="ri-dashboard-3-line"></i>
-          <span>Dashboard</span>
+          <span>Inicio</span>
         </a>
         <a href="#" class="nav-item" data-section="donations">
           <i class="ri-heart-3-line"></i>
           <span>Donaciones</span>
         </a>
         <a href="#" class="nav-item" data-section="documents">
-          <i class="ri-file-text-line"></i>
+          <i class="ri-file-list-3-line"></i>
           <span>Documentos</span>
         </a>
         <a href="#" class="nav-item" data-section="events">
-          <i class="ri-calendar-event-line"></i>
+          <i class="ri-calendar-check-line"></i>
           <span>Eventos</span>
         </a>
-        <a href="#" class="nav-item" data-section="reports">
+
+        <!-- Admin Section -->
+        <div class="nav-divider admin-only" style="display:none;"></div>
+        <p class="nav-label admin-only" style="display:none;">Administración</p>
+        
+        <a href="#" class="nav-item admin-only" data-section="expenses" style="display:none;">
+          <i class="ri-money-dollar-circle-line"></i>
+          <span>Gastos</span>
+        </a>
+        <a href="#" class="nav-item admin-only" data-section="reports" style="display:none;">
           <i class="ri-bar-chart-box-line"></i>
           <span>Reportes</span>
         </a>
       </nav>
 
       <div class="sidebar-footer">
+        <button class="btn btn-ghost btn-sm" id="btn-back-to-site">
+          <i class="ri-arrow-left-line"></i>
+          <span>Volver al sitio</span>
+        </button>
         <div class="user-card">
           <div class="user-avatar">
             <i class="ri-user-line"></i>
@@ -129,7 +360,7 @@
             <span id="user-role" class="user-role">member</span>
           </div>
         </div>
-        <button id="logout-btn" class="btn btn-ghost btn-sm">
+        <button id="logout-btn" class="btn btn-ghost btn-icon" title="Cerrar sesión">
           <i class="ri-logout-box-r-line"></i>
         </button>
       </div>
@@ -142,9 +373,9 @@
         <header class="section-header">
           <div>
             <h1>Dashboard</h1>
-            <p>Resumen general de la iglesia</p>
+            <p>Resumen de actividad</p>
           </div>
-          <button id="refresh-dashboard" class="btn btn-secondary">
+          <button class="btn btn-secondary" id="refresh-dashboard">
             <i class="ri-refresh-line"></i>
             <span>Actualizar</span>
           </button>
@@ -152,39 +383,31 @@
 
         <div class="stats-grid">
           <div class="stat-card stat-primary">
-            <div class="stat-icon">
-              <i class="ri-heart-3-fill"></i>
-            </div>
-            <div class="stat-content">
-              <span class="stat-label">Total Donaciones</span>
-              <h3 id="stat-donations-count" class="stat-value">—</h3>
+            <div class="stat-icon"><i class="ri-heart-3-line"></i></div>
+            <div>
+              <div class="stat-label">Total Donaciones</div>
+              <div class="stat-value" id="stat-donations-count">0</div>
             </div>
           </div>
           <div class="stat-card stat-success">
-            <div class="stat-icon">
-              <i class="ri-money-dollar-circle-fill"></i>
-            </div>
-            <div class="stat-content">
-              <span class="stat-label">Monto Total</span>
-              <h3 id="stat-total-amount" class="stat-value">—</h3>
+            <div class="stat-icon"><i class="ri-money-dollar-circle-line"></i></div>
+            <div>
+              <div class="stat-label">Monto Total</div>
+              <div class="stat-value" id="stat-total-amount">$0</div>
             </div>
           </div>
           <div class="stat-card stat-info">
-            <div class="stat-icon">
-              <i class="ri-calendar-check-fill"></i>
-            </div>
-            <div class="stat-content">
-              <span class="stat-label">Eventos Activos</span>
-              <h3 id="stat-events-count" class="stat-value">—</h3>
+            <div class="stat-icon"><i class="ri-calendar-event-line"></i></div>
+            <div>
+              <div class="stat-label">Eventos</div>
+              <div class="stat-value" id="stat-events-count">0</div>
             </div>
           </div>
           <div class="stat-card stat-warning">
-            <div class="stat-icon">
-              <i class="ri-file-list-3-fill"></i>
-            </div>
-            <div class="stat-content">
-              <span class="stat-label">Documentos</span>
-              <h3 id="stat-documents-count" class="stat-value">—</h3>
+            <div class="stat-icon"><i class="ri-file-list-3-line"></i></div>
+            <div>
+              <div class="stat-label">Documentos</div>
+              <div class="stat-value" id="stat-documents-count">0</div>
             </div>
           </div>
         </div>
@@ -192,14 +415,13 @@
         <div class="dashboard-grid">
           <div class="card">
             <div class="card-header">
-              <h3>Donaciones por Tipo</h3>
-              <span class="badge">Este mes</span>
+              <h3>Por Tipo de Donación</h3>
             </div>
             <div class="card-body">
               <div id="chart-by-type" class="chart-container">
                 <div class="chart-placeholder">
                   <i class="ri-pie-chart-2-line"></i>
-                  <p>Inicia sesión para ver estadísticas</p>
+                  <p>Cargando datos...</p>
                 </div>
               </div>
             </div>
@@ -207,7 +429,6 @@
           <div class="card">
             <div class="card-header">
               <h3>Actividad Reciente</h3>
-              <a href="#" class="link" data-section="donations">Ver todo →</a>
             </div>
             <div class="card-body">
               <div id="recent-activity" class="activity-list">
@@ -226,15 +447,21 @@
         <header class="section-header">
           <div>
             <h1>Donaciones</h1>
-            <p>Registra y administra las donaciones</p>
+            <p>Registra y consulta donaciones</p>
           </div>
-          <button id="new-donation-btn" class="btn btn-primary">
-            <i class="ri-add-line"></i>
-            <span>Nueva Donación</span>
-          </button>
+          <div class="header-actions">
+            <button class="btn btn-secondary" id="export-donations-btn">
+              <i class="ri-download-line"></i>
+              <span>Exportar CSV</span>
+            </button>
+            <button class="btn btn-primary" id="new-donation-btn">
+              <i class="ri-add-line"></i>
+              <span>Nueva Donación</span>
+            </button>
+          </div>
         </header>
 
-        <!-- Donation Form Card -->
+        <!-- Donation Form Card (Formato Actualizado) -->
         <div id="donation-form-card" class="card form-card hidden">
           <div class="card-header">
             <h3>Registrar Donación</h3>
@@ -243,49 +470,105 @@
             </button>
           </div>
           <div class="card-body">
+            <div class="donation-receipt-preview">
+              <p class="receipt-verse">"Honra al Señor con tus riquezas y con los primeros frutos de tus cosechas" — Proverbios 3:9-10</p>
+            </div>
             <form id="donation-form" class="form-grid">
-              <div class="form-group">
-                <label for="donation-type">Tipo de Donación</label>
-                <div class="select-wrapper">
-                  <select id="donation-type" name="donation_type" required>
-                    <option value="diezmo">Diezmo</option>
-                    <option value="ofrenda">Ofrenda</option>
-                    <option value="misiones">Misiones</option>
-                    <option value="especial">Ofrenda Especial</option>
-                  </select>
-                  <i class="ri-arrow-down-s-line"></i>
-                </div>
+              <!-- Datos del Donante -->
+              <div class="form-section full-width">
+                <h4>Datos del Donante</h4>
               </div>
               <div class="form-group">
-                <label for="donation-amount">Monto</label>
+                <label>Nombre completo *</label>
+                <input type="text" name="donor_name" required />
+              </div>
+              <div class="form-group">
+                <label>Cédula/NIT</label>
+                <input type="text" name="donor_document" />
+              </div>
+              <div class="form-group">
+                <label>Dirección</label>
+                <input type="text" name="donor_address" />
+              </div>
+              <div class="form-group">
+                <label>Teléfono</label>
+                <input type="tel" name="donor_phone" />
+              </div>
+              
+              <!-- Montos Separados -->
+              <div class="form-section full-width">
+                <h4>Montos por Tipo</h4>
+              </div>
+              <div class="form-group">
+                <label>Diezmo</label>
                 <div class="input-wrapper">
                   <span class="input-prefix">$</span>
-                  <input type="number" id="donation-amount" name="amount" step="0.01" min="0" placeholder="0.00" required />
+                  <input type="number" name="amount_tithe" step="0.01" min="0" value="0" />
                 </div>
               </div>
               <div class="form-group">
-                <label for="donation-method">Medio de Pago</label>
-                <div class="select-wrapper">
-                  <select id="donation-method" name="payment_method" required>
-                    <option value="efectivo">Efectivo</option>
-                    <option value="transferencia">Transferencia</option>
-                    <option value="tarjeta">Tarjeta</option>
-                    <option value="otro">Otro</option>
-                  </select>
-                  <i class="ri-arrow-down-s-line"></i>
-                </div>
-              </div>
-              <div class="form-group">
-                <label for="donation-date">Fecha</label>
+                <label>Ofrenda</label>
                 <div class="input-wrapper">
-                  <i class="ri-calendar-line"></i>
-                  <input type="date" id="donation-date" name="donation_date" required />
+                  <span class="input-prefix">$</span>
+                  <input type="number" name="amount_offering" step="0.01" min="0" value="0" />
                 </div>
+              </div>
+              <div class="form-group">
+                <label>Misiones</label>
+                <div class="input-wrapper">
+                  <span class="input-prefix">$</span>
+                  <input type="number" name="amount_missions" step="0.01" min="0" value="0" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Especial</label>
+                <div class="input-wrapper">
+                  <span class="input-prefix">$</span>
+                  <input type="number" name="amount_special" step="0.01" min="0" value="0" />
+                </div>
+              </div>
+              
+              <!-- Método de Pago -->
+              <div class="form-section full-width">
+                <h4>Método de Pago</h4>
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" name="is_cash" checked />
+                  <span>Efectivo</span>
+                </label>
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" name="is_transfer" />
+                  <span>Transferencia</span>
+                </label>
+              </div>
+              <div class="form-group">
+                <label>Referencia de pago</label>
+                <input type="text" name="payment_reference" placeholder="Número de transferencia" />
+              </div>
+              <div class="form-group">
+                <label>Fecha *</label>
+                <input type="date" name="donation_date" id="donation-date" required />
+              </div>
+              
+              <!-- Metadatos -->
+              <div class="form-group">
+                <label>Número de sobre</label>
+                <input type="text" name="envelope_number" />
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" name="is_anonymous" />
+                  <span>Donación anónima (OSI)</span>
+                </label>
               </div>
               <div class="form-group full-width">
-                <label for="donation-note">Nota / Referencia</label>
-                <textarea id="donation-note" name="note" rows="3" placeholder="Detalles adicionales..."></textarea>
+                <label>Nota (opcional)</label>
+                <textarea name="note" rows="2"></textarea>
               </div>
+              
               <div class="form-actions">
                 <button type="button" class="btn btn-secondary close-form-btn">Cancelar</button>
                 <button type="submit" class="btn btn-primary">
@@ -297,32 +580,24 @@
           </div>
         </div>
 
-        <!-- Donations List -->
         <div class="card">
-          <div class="card-header">
-            <h3>Historial de Donaciones</h3>
-            <div class="card-actions">
-              <button id="export-donations-btn" class="btn btn-ghost btn-sm">
-                <i class="ri-download-2-line"></i>
-                <span>Exportar CSV</span>
-              </button>
-            </div>
-          </div>
           <div class="card-body">
-            <div id="donations-list" class="table-wrapper">
+            <div class="table-wrapper">
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>Tipo</th>
-                    <th>Monto</th>
-                    <th>Método</th>
                     <th>Fecha</th>
-                    <th>Nota</th>
+                    <th>Donante</th>
+                    <th>Diezmo</th>
+                    <th>Ofrenda</th>
+                    <th>Misiones</th>
+                    <th>Total</th>
+                    <th>Método</th>
                   </tr>
                 </thead>
                 <tbody id="donations-tbody">
                   <tr class="empty-row">
-                    <td colspan="5">
+                    <td colspan="7">
                       <div class="empty-state">
                         <i class="ri-inbox-line"></i>
                         <p>No hay donaciones registradas</p>
@@ -341,15 +616,14 @@
         <header class="section-header">
           <div>
             <h1>Documentos</h1>
-            <p>Gestiona los documentos de soporte</p>
+            <p>Gestión de archivos y comprobantes</p>
           </div>
-          <button id="new-document-btn" class="btn btn-primary">
+          <button class="btn btn-primary" id="new-document-btn">
             <i class="ri-upload-2-line"></i>
             <span>Subir Documento</span>
           </button>
         </header>
 
-        <!-- Document Upload Form -->
         <div id="document-form-card" class="card form-card hidden">
           <div class="card-header">
             <h3>Subir Documento</h3>
@@ -358,49 +632,44 @@
             </button>
           </div>
           <div class="card-body">
-            <form id="document-form" class="form-grid">
+            <form id="document-form">
               <div class="form-group">
-                <label for="doc-link-type">Vincular a</label>
-                <div class="select-wrapper">
-                  <select id="doc-link-type" name="link_type">
+                <div class="file-upload" id="file-drop-zone">
+                  <i class="ri-upload-cloud-2-line"></i>
+                  <p>Arrastra un archivo o haz clic para seleccionar</p>
+                  <span class="file-hint">PDF, PNG, JPG (máx. 10MB)</span>
+                  <input type="file" id="doc-file" name="file" accept=".pdf,.png,.jpg,.jpeg" hidden />
+                </div>
+                <div id="file-preview" class="file-preview hidden">
+                  <i class="ri-file-line"></i>
+                  <span id="file-name"></span>
+                  <button type="button" class="btn btn-ghost btn-xs" id="remove-file">
+                    <i class="ri-close-line"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Vincular a</label>
+                  <select name="link_type">
+                    <option value="">Sin vincular</option>
                     <option value="donation">Donación</option>
                     <option value="event">Evento</option>
-                    <option value="user">Usuario</option>
                   </select>
-                  <i class="ri-arrow-down-s-line"></i>
+                </div>
+                <div class="form-group">
+                  <label>ID de referencia</label>
+                  <input type="number" name="ref_id" min="1" />
                 </div>
               </div>
               <div class="form-group">
-                <label for="doc-ref-id">ID de Referencia</label>
-                <div class="input-wrapper">
-                  <i class="ri-hashtag"></i>
-                  <input type="text" id="doc-ref-id" name="ref_id" placeholder="Ej: 1" />
-                </div>
-              </div>
-              <div class="form-group full-width">
-                <label for="doc-description">Descripción</label>
-                <textarea id="doc-description" name="description" rows="2" placeholder="Descripción del documento..."></textarea>
-              </div>
-              <div class="form-group full-width">
-                <label>Archivo</label>
-                <div class="file-upload" id="file-drop-zone">
-                  <input type="file" id="doc-file" name="file" accept=".pdf,.png,.jpg,.jpeg" hidden />
-                  <i class="ri-upload-cloud-2-line"></i>
-                  <p>Arrastra tu archivo aquí o <span class="link">selecciona</span></p>
-                  <span class="file-hint">PDF, PNG, JPG (máx. 10MB)</span>
-                  <div id="file-preview" class="file-preview hidden">
-                    <i class="ri-file-line"></i>
-                    <span id="file-name">archivo.pdf</span>
-                    <button type="button" id="remove-file" class="btn btn-ghost btn-icon btn-xs">
-                      <i class="ri-close-line"></i>
-                    </button>
-                  </div>
-                </div>
+                <label>Descripción</label>
+                <textarea name="description" rows="2"></textarea>
               </div>
               <div class="form-actions">
                 <button type="button" class="btn btn-secondary close-form-btn">Cancelar</button>
                 <button type="submit" class="btn btn-primary">
-                  <i class="ri-upload-2-line"></i>
+                  <i class="ri-upload-line"></i>
                   <span>Subir</span>
                 </button>
               </div>
@@ -408,18 +677,10 @@
           </div>
         </div>
 
-        <!-- Documents List -->
-        <div class="card">
-          <div class="card-header">
-            <h3>Documentos Subidos</h3>
-          </div>
-          <div class="card-body">
-            <div id="documents-list" class="documents-grid">
-              <div class="empty-state">
-                <i class="ri-folder-line"></i>
-                <p>No hay documentos subidos</p>
-              </div>
-            </div>
+        <div class="documents-grid" id="documents-list">
+          <div class="empty-state">
+            <i class="ri-folder-line"></i>
+            <p>No hay documentos subidos</p>
           </div>
         </div>
       </section>
@@ -429,15 +690,14 @@
         <header class="section-header">
           <div>
             <h1>Eventos</h1>
-            <p>Crea y administra eventos de la iglesia</p>
+            <p>Gestión de eventos e inscripciones</p>
           </div>
-          <button id="new-event-btn" class="btn btn-primary">
+          <button class="btn btn-primary admin-only" id="new-event-btn" style="display:none;">
             <i class="ri-add-line"></i>
             <span>Nuevo Evento</span>
           </button>
         </header>
 
-        <!-- Event Form -->
         <div id="event-form-card" class="card form-card hidden">
           <div class="card-header">
             <h3>Crear Evento</h3>
@@ -448,36 +708,24 @@
           <div class="card-body">
             <form id="event-form" class="form-grid">
               <div class="form-group full-width">
-                <label for="event-name">Nombre del Evento</label>
-                <div class="input-wrapper">
-                  <i class="ri-calendar-event-line"></i>
-                  <input type="text" id="event-name" name="name" placeholder="Ej: Conferencia de Jóvenes" required />
-                </div>
-              </div>
-              <div class="form-group">
-                <label for="event-start">Fecha de Inicio</label>
-                <div class="input-wrapper">
-                  <i class="ri-calendar-line"></i>
-                  <input type="date" id="event-start" name="start_date" />
-                </div>
-              </div>
-              <div class="form-group">
-                <label for="event-end">Fecha de Fin</label>
-                <div class="input-wrapper">
-                  <i class="ri-calendar-line"></i>
-                  <input type="date" id="event-end" name="end_date" />
-                </div>
-              </div>
-              <div class="form-group">
-                <label for="event-capacity">Capacidad</label>
-                <div class="input-wrapper">
-                  <i class="ri-group-line"></i>
-                  <input type="number" id="event-capacity" name="capacity" min="1" placeholder="Sin límite" />
-                </div>
+                <label>Nombre del evento *</label>
+                <input type="text" name="name" required />
               </div>
               <div class="form-group full-width">
-                <label for="event-description">Descripción</label>
-                <textarea id="event-description" name="description" rows="3" placeholder="Detalles del evento..."></textarea>
+                <label>Descripción</label>
+                <textarea name="description" rows="2"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Fecha inicio</label>
+                <input type="date" name="start_date" />
+              </div>
+              <div class="form-group">
+                <label>Fecha fin</label>
+                <input type="date" name="end_date" />
+              </div>
+              <div class="form-group">
+                <label>Capacidad</label>
+                <input type="number" name="capacity" min="1" />
               </div>
               <div class="form-actions">
                 <button type="button" class="btn btn-secondary close-form-btn">Cancelar</button>
@@ -490,145 +738,383 @@
           </div>
         </div>
 
-        <!-- Events List -->
-        <div id="events-container" class="events-grid">
+        <div class="events-grid" id="events-container">
           <div class="empty-state-full">
             <i class="ri-calendar-todo-line"></i>
-            <h3>No hay eventos programados</h3>
-            <p>Crea tu primer evento para comenzar</p>
+            <h3>No hay eventos</h3>
+            <p>Crea tu primer evento</p>
           </div>
         </div>
       </section>
 
-      <!-- Reports Section -->
-      <section id="section-reports" class="section">
+      <!-- Expenses Section (Admin Only) -->
+      <section id="section-expenses" class="section">
         <header class="section-header">
           <div>
-            <h1>Reportes</h1>
-            <p>Genera reportes y exporta datos</p>
+            <h1>Gastos</h1>
+            <p>Control de egresos de la iglesia</p>
           </div>
+          <button class="btn btn-primary" id="new-expense-btn">
+            <i class="ri-add-line"></i>
+            <span>Nuevo Gasto</span>
+          </button>
         </header>
 
-        <div class="card">
+        <!-- Expense Form Card -->
+        <div id="expense-form-card" class="card form-card hidden">
           <div class="card-header">
-            <h3>Filtros de Reporte</h3>
+            <h3>Registrar Gasto</h3>
+            <button class="btn btn-ghost btn-icon close-form-btn">
+              <i class="ri-close-line"></i>
+            </button>
           </div>
           <div class="card-body">
-            <form id="report-filters" class="form-row">
+            <form id="expense-form" class="form-grid">
               <div class="form-group">
-                <label for="report-from">Desde</label>
-                <input type="date" id="report-from" name="from_date" />
+                <label>Categoría *</label>
+                <select name="category_id" id="expense-category" required>
+                  <option value="">Seleccionar...</option>
+                </select>
               </div>
               <div class="form-group">
-                <label for="report-to">Hasta</label>
-                <input type="date" id="report-to" name="to_date" />
+                <label>Subcategoría</label>
+                <select name="subcategory_id" id="expense-subcategory">
+                  <option value="">Seleccionar...</option>
+                </select>
+              </div>
+              <div class="form-group full-width">
+                <label>Descripción *</label>
+                <input type="text" name="description" required />
               </div>
               <div class="form-group">
-                <label for="report-type">Tipo</label>
-                <div class="select-wrapper">
-                  <select id="report-type" name="donation_type">
-                    <option value="">Todos</option>
-                    <option value="diezmo">Diezmo</option>
-                    <option value="ofrenda">Ofrenda</option>
-                    <option value="misiones">Misiones</option>
-                    <option value="especial">Especial</option>
-                  </select>
-                  <i class="ri-arrow-down-s-line"></i>
+                <label>Monto *</label>
+                <div class="input-wrapper">
+                  <span class="input-prefix">$</span>
+                  <input type="number" name="amount" step="0.01" min="0.01" required />
                 </div>
               </div>
-              <div class="form-group form-actions-inline">
+              <div class="form-group">
+                <label>Fecha *</label>
+                <input type="date" name="expense_date" required />
+              </div>
+              <div class="form-group">
+                <label>Proveedor</label>
+                <input type="text" name="vendor_name" />
+              </div>
+              <div class="form-group">
+                <label>NIT/Cédula Proveedor</label>
+                <input type="text" name="vendor_document" />
+              </div>
+              <div class="form-group">
+                <label>Método de Pago</label>
+                <select name="payment_method">
+                  <option value="efectivo">Efectivo</option>
+                  <option value="transferencia">Transferencia</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="tarjeta">Tarjeta</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Número de Factura</label>
+                <input type="text" name="invoice_number" />
+              </div>
+              <div class="form-group full-width">
+                <label>Notas</label>
+                <textarea name="notes" rows="2"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary close-form-btn">Cancelar</button>
                 <button type="submit" class="btn btn-primary">
-                  <i class="ri-filter-3-line"></i>
-                  <span>Filtrar</span>
-                </button>
-                <button type="button" id="export-report-btn" class="btn btn-secondary">
-                  <i class="ri-file-excel-2-line"></i>
-                  <span>Exportar CSV</span>
+                  <i class="ri-save-line"></i>
+                  <span>Guardar Gasto</span>
                 </button>
               </div>
             </form>
           </div>
         </div>
 
+        <!-- Expense Stats -->
         <div class="stats-grid stats-3">
-          <div class="stat-card stat-outline">
-            <div class="stat-content">
-              <span class="stat-label">Total Donaciones</span>
-              <h3 id="report-total-count" class="stat-value">—</h3>
+          <div class="stat-card stat-warning">
+            <div class="stat-icon"><i class="ri-time-line"></i></div>
+            <div>
+              <div class="stat-label">Pendientes</div>
+              <div class="stat-value" id="expense-pending">$0</div>
             </div>
           </div>
-          <div class="stat-card stat-outline">
-            <div class="stat-content">
-              <span class="stat-label">Monto Total</span>
-              <h3 id="report-total-amount" class="stat-value">—</h3>
+          <div class="stat-card stat-info">
+            <div class="stat-icon"><i class="ri-check-line"></i></div>
+            <div>
+              <div class="stat-label">Aprobados</div>
+              <div class="stat-value" id="expense-approved">$0</div>
             </div>
           </div>
-          <div class="stat-card stat-outline">
-            <div class="stat-content">
-              <span class="stat-label">Promedio</span>
-              <h3 id="report-average" class="stat-value">—</h3>
+          <div class="stat-card stat-success">
+            <div class="stat-icon"><i class="ri-checkbox-circle-line"></i></div>
+            <div>
+              <div class="stat-label">Pagados</div>
+              <div class="stat-value" id="expense-paid">$0</div>
             </div>
           </div>
         </div>
 
+        <!-- Expenses Table -->
         <div class="card">
           <div class="card-header">
-            <h3>Desglose por Tipo</h3>
+            <h3>Lista de Gastos</h3>
+            <button class="btn btn-secondary btn-sm" id="export-expenses-btn">
+              <i class="ri-download-line"></i>
+              <span>Exportar</span>
+            </button>
           </div>
           <div class="card-body">
-            <div id="report-breakdown" class="breakdown-grid">
-              <div class="empty-state">
-                <i class="ri-pie-chart-line"></i>
-                <p>Aplica filtros para ver el desglose</p>
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Categoría</th>
+                    <th>Descripción</th>
+                    <th>Monto</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="expenses-tbody">
+                  <tr class="empty-row">
+                    <td colspan="6">
+                      <div class="empty-state">
+                        <i class="ri-inbox-line"></i>
+                        <p>No hay gastos registrados</p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Reports Section (Admin Only) -->
+      <section id="section-reports" class="section">
+        <header class="section-header">
+          <div>
+            <h1>Reportes</h1>
+            <p>Análisis financiero y exportación</p>
+          </div>
+        </header>
+
+        <!-- Report Tabs -->
+        <div class="report-tabs">
+          <button class="report-tab active" data-report="donations">Donaciones</button>
+          <button class="report-tab" data-report="expenses">Gastos</button>
+          <button class="report-tab" data-report="accountant">Para Contadora</button>
+        </div>
+
+        <!-- Donations Report -->
+        <div id="report-donations" class="report-panel active">
+          <div class="card">
+            <div class="card-header">
+              <h3>Reporte de Donaciones</h3>
+            </div>
+            <div class="card-body">
+              <form id="report-filters" class="form-row">
+                <div class="form-group">
+                  <label>Mes</label>
+                  <select name="month" id="report-month">
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Año</label>
+                  <input type="number" name="year" id="report-year" min="2020" max="2030" />
+                </div>
+                <div class="form-actions-inline">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="ri-search-line"></i>
+                    <span>Generar</span>
+                  </button>
+                  <button type="button" class="btn btn-secondary" id="export-monthly-csv">
+                    <i class="ri-file-excel-line"></i>
+                    <span>Exportar CSV</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card stat-outline">
+              <div class="stat-label">Total Diezmos</div>
+              <div class="stat-value" id="report-total-tithe">$0</div>
+            </div>
+            <div class="stat-card stat-outline">
+              <div class="stat-label">Total Ofrendas</div>
+              <div class="stat-value" id="report-total-offering">$0</div>
+            </div>
+            <div class="stat-card stat-outline">
+              <div class="stat-label">Total Misiones</div>
+              <div class="stat-value" id="report-total-missions">$0</div>
+            </div>
+            <div class="stat-card stat-outline">
+              <div class="stat-label">Gran Total</div>
+              <div class="stat-value" id="report-grand-total">$0</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <div id="report-breakdown" class="breakdown-grid"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Expenses Report -->
+        <div id="report-expenses" class="report-panel">
+          <div class="card">
+            <div class="card-header">
+              <h3>Reporte de Gastos</h3>
+            </div>
+            <div class="card-body">
+              <form id="expense-report-filters" class="form-row">
+                <div class="form-group">
+                  <label>Mes</label>
+                  <select name="month" id="expense-report-month">
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Año</label>
+                  <input type="number" name="year" id="expense-report-year" min="2020" max="2030" />
+                </div>
+                <div class="form-actions-inline">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="ri-search-line"></i>
+                    <span>Generar</span>
+                  </button>
+                  <button type="button" class="btn btn-secondary" id="export-expenses-csv">
+                    <i class="ri-file-excel-line"></i>
+                    <span>Exportar CSV</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div id="expense-report-content"></div>
+        </div>
+
+        <!-- Accountant Report -->
+        <div id="report-accountant" class="report-panel">
+          <div class="card">
+            <div class="card-header">
+              <h3>Reporte Semanal para Contadora</h3>
+            </div>
+            <div class="card-body">
+              <form id="accountant-report-filters" class="form-row">
+                <div class="form-group">
+                  <label>Semana</label>
+                  <input type="number" name="week" id="accountant-week" min="1" max="53" />
+                </div>
+                <div class="form-group">
+                  <label>Año</label>
+                  <input type="number" name="year" id="accountant-year" min="2020" max="2030" />
+                </div>
+                <div class="form-actions-inline">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="ri-search-line"></i>
+                    <span>Generar</span>
+                  </button>
+                  <button type="button" class="btn btn-secondary" id="export-accountant-csv">
+                    <i class="ri-file-excel-line"></i>
+                    <span>Exportar CSV</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Accountant Report Preview -->
+          <div class="card" id="accountant-report-preview" style="display:none;">
+            <div class="card-header">
+              <h3>RELACIÓN DE DIEZMOS Y OFRENDAS</h3>
+            </div>
+            <div class="card-body">
+              <div class="accountant-header">
+                <p><strong>FECHA:</strong> <span id="acc-fecha"></span></p>
+                <p><strong>SEMANA:</strong> <span id="acc-semana"></span></p>
+                <p><strong>NÚMERO DE SOBRES:</strong> <span id="acc-sobres"></span></p>
+              </div>
+              <table class="data-table accountant-table">
+                <thead>
+                  <tr>
+                    <th>CONCEPTO</th>
+                    <th>EFECTIVO</th>
+                    <th>TRANSFERENCIA</th>
+                    <th>TOTAL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>DIEZMOS</td>
+                    <td id="acc-diezmo-efectivo">$0</td>
+                    <td id="acc-diezmo-transferencia">$0</td>
+                    <td id="acc-diezmo-total">$0</td>
+                  </tr>
+                  <tr>
+                    <td>OFRENDAS</td>
+                    <td id="acc-ofrenda-efectivo">$0</td>
+                    <td id="acc-ofrenda-transferencia">$0</td>
+                    <td id="acc-ofrenda-total">$0</td>
+                  </tr>
+                  <tr>
+                    <td>MISIONES</td>
+                    <td id="acc-misiones-efectivo">$0</td>
+                    <td id="acc-misiones-transferencia">$0</td>
+                    <td id="acc-misiones-total">$0</td>
+                  </tr>
+                  <tr class="total-row">
+                    <td>VALOR TOTAL</td>
+                    <td id="acc-total-efectivo">$0</td>
+                    <td id="acc-total-transferencia">$0</td>
+                    <td id="acc-valor-total">$0</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="accountant-footer">
+                <p><strong>DIEZMOS DE DIEZMOS:</strong> <span id="acc-diezmo-diezmos">$0</span></p>
+                <div class="witnesses">
+                  <p><strong>TESTIGO 1:</strong> ________________</p>
+                  <p><strong>TESTIGO 2:</strong> ________________</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
     </main>
-  </div>
-
-  <!-- Registration Modal (for public event registration) -->
-  <div id="registration-modal" class="modal hidden">
-    <div class="modal-backdrop"></div>
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Inscribirse al Evento</h3>
-        <button class="btn btn-ghost btn-icon modal-close-btn">
-          <i class="ri-close-line"></i>
-        </button>
-      </div>
-      <div class="modal-body">
-        <form id="registration-form">
-          <input type="hidden" id="reg-event-id" name="event_id" />
-          <div class="form-group">
-            <label for="reg-name">Nombre completo</label>
-            <div class="input-wrapper">
-              <i class="ri-user-line"></i>
-              <input type="text" id="reg-name" name="attendee_name" placeholder="Tu nombre" required />
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="reg-email">Correo electrónico</label>
-            <div class="input-wrapper">
-              <i class="ri-mail-line"></i>
-              <input type="email" id="reg-email" name="attendee_email" placeholder="tu@correo.com" required />
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="reg-notes">Notas (opcional)</label>
-            <textarea id="reg-notes" name="notes" rows="2" placeholder="Comentarios adicionales..."></textarea>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary modal-close-btn">Cancelar</button>
-            <button type="submit" class="btn btn-primary">
-              <i class="ri-check-line"></i>
-              <span>Confirmar Inscripción</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
   </div>
 
   <script src="./js/app.js" type="module"></script>

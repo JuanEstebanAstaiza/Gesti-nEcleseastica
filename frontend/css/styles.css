@@ -1284,6 +1284,527 @@ textarea {
 }
 
 /* ========================================
+   PUBLIC PAGES
+   ======================================== */
+.landing-page {
+  min-height: 100vh;
+}
+
+.public-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(10, 10, 11, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-logo {
+  width: 40px;
+  height: 40px;
+  background: var(--accent-gradient);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-logo i {
+  font-size: 20px;
+  color: white;
+}
+
+.header-name {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.header-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-link {
+  padding: 8px 16px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: var(--text-primary);
+  background: var(--surface-2);
+}
+
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* Hero Section */
+.hero-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 100px 24px;
+  text-align: center;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 700px;
+}
+
+.hero-content h1 {
+  font-family: var(--font-display);
+  font-size: 56px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-slogan {
+  font-size: 20px;
+  color: var(--text-secondary);
+  margin-bottom: 40px;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+}
+
+.btn-outline:hover {
+  background: var(--surface-2);
+  border-color: var(--border-hover);
+}
+
+.btn-lg {
+  padding: 14px 28px;
+  font-size: 16px;
+}
+
+/* Sections */
+.section-services,
+.section-events-preview {
+  padding: 80px 24px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.container-narrow {
+  max-width: 800px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.service-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  text-align: center;
+  transition: all var(--transition-base);
+}
+
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.service-card i {
+  font-size: 40px;
+  color: var(--accent-primary);
+  margin-bottom: 16px;
+}
+
+.service-card h3 {
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+.service-card p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+/* Page Hero */
+.page-hero {
+  padding: 120px 24px 60px;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.1) 0%, transparent 100%);
+}
+
+.page-hero h1 {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.page-hero p {
+  color: var(--text-secondary);
+  font-size: 18px;
+}
+
+.public-page {
+  display: none;
+}
+
+.public-page.active {
+  display: block;
+}
+
+/* Donation Types */
+.donation-types {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.donation-type-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  text-align: center;
+}
+
+.donation-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  background: var(--accent-gradient);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donation-icon i {
+  font-size: 28px;
+  color: white;
+}
+
+.donation-type-card h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.donation-type-card p {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Payment Methods */
+.payment-methods-section h2 {
+  font-size: 24px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.payment-methods {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.payment-method-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  text-align: center;
+}
+
+.payment-method-card i {
+  font-size: 32px;
+  color: var(--accent-primary);
+  margin-bottom: 12px;
+}
+
+.payment-method-card h4 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.payment-method-card p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Footer */
+.public-footer {
+  padding: 32px 24px;
+  border-top: 1px solid var(--border-subtle);
+  text-align: center;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.footer-brand i {
+  font-size: 24px;
+  color: var(--accent-primary);
+}
+
+.footer-copy {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ========================================
+   FORM ENHANCEMENTS
+   ======================================== */
+.form-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.form-section:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.form-section h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 400;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-primary);
+}
+
+.donation-receipt-preview {
+  background: var(--surface-1);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.receipt-verse {
+  font-style: italic;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* ========================================
+   REPORT TABS
+   ======================================== */
+.report-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface-1);
+  border-radius: var(--radius-md);
+  margin-bottom: 24px;
+}
+
+.report-tab {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.report-tab.active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.report-panel {
+  display: none;
+}
+
+.report-panel.active {
+  display: block;
+}
+
+/* Accountant Table */
+.accountant-table {
+  margin: 24px 0;
+}
+
+.accountant-table .total-row td {
+  font-weight: 700;
+  background: var(--surface-2);
+}
+
+.accountant-header {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 24px;
+}
+
+.accountant-header p {
+  font-size: 14px;
+}
+
+.accountant-footer {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.accountant-footer .witnesses {
+  display: flex;
+  gap: 48px;
+  margin-top: 24px;
+}
+
+/* Spin animation */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Loading state */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  color: var(--text-muted);
+}
+
+.loading-state i {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+/* Empty message */
+.empty-message {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px;
+}
+
+/* Nav extras */
+.nav-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 16px 0;
+}
+
+.nav-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  padding: 0 16px;
+  margin-bottom: 8px;
+}
+
+/* ========================================
    RESPONSIVE
    ======================================== */
 @media (max-width: 1200px) {

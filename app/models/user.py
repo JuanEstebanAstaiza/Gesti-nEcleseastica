@@ -20,7 +20,10 @@ class User(Base):
     )
 
     donations: Mapped[list["Donation"]] = relationship(
-        "Donation", back_populates="user", cascade="all, delete-orphan"
+        "Donation", 
+        back_populates="user", 
+        cascade="all, delete-orphan",
+        foreign_keys="[Donation.user_id]"
     )
     documents: Mapped[list["Document"]] = relationship(
         "Document", back_populates="uploaded_by", cascade="all, delete-orphan"

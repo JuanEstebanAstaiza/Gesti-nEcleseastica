@@ -10,10 +10,28 @@ from app.api.routes import (
     reports,
     registrations,
     ws,
+    superadmin,
+    public,
+    church_admin,
+    donation_reports,
+    expenses,
 )
 
 router = APIRouter()
+
+# Health check (sin tenant)
 router.include_router(health.router, prefix="/health", tags=["health"])
+
+# Super Admin routes (sin tenant)
+router.include_router(superadmin.router)
+
+# Public routes (requiere tenant)
+router.include_router(public.router)
+
+# Church admin routes (requiere tenant + admin)
+router.include_router(church_admin.router)
+
+# Tenant routes (requiere tenant)
 router.include_router(auth.router)
 router.include_router(users.router)
 router.include_router(donations.router)
@@ -23,3 +41,8 @@ router.include_router(reports.router)
 router.include_router(registrations.router)
 router.include_router(ws.router)
 
+# Reportes de donaciones (formato contadora)
+router.include_router(donation_reports.router)
+
+# Módulo de gastos
+router.include_router(expenses.router)

@@ -1,4 +1,24 @@
 services:
+  # Base de datos MASTER (gestión de tenants)
+  db_master:
+    image: postgres:15-alpine
+    container_name: ekklesia_db_master
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ekklesia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ekklesia}
+      POSTGRES_DB: ekklesia_master
+    volumes:
+      - pgdata_master:/var/lib/postgresql/data
+      - ./app/db/sql/master_schema.sql:/docker-entrypoint-initdb.d/01_master_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ekklesia} -d ekklesia_master"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "55433:5432"
+
+  # Base de datos por defecto para desarrollo (tenant demo)
   db:
     image: postgres:15-alpine
     container_name: ekklesia_db
@@ -8,7 +28,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-ekklesia}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./app/db/sql:/docker-entrypoint-initdb.d:ro
+      - ./app/db/sql/tenant_schema.sql:/docker-entrypoint-initdb.d/01_tenant_schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ekklesia}"]
       interval: 5s
@@ -17,6 +37,7 @@ services:
     ports:
       - "55432:5432"
 
+  # Backend FastAPI
   backend:
     build:
       context: .
@@ -24,6 +45,9 @@ services:
     container_name: ekklesia_backend
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://ekklesia:ekklesia@db:5432/ekklesia
+      - MASTER_DATABASE_URL=postgresql+asyncpg://ekklesia:ekklesia@db_master:5432/ekklesia_master
     volumes:
       - ./app:/code/app
       - ./storage:/code/storage
@@ -32,8 +56,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      db_master:
+        condition: service_healthy
     restart: unless-stopped
 
+  # Frontend Nginx
   frontend:
     build:
       context: ./frontend
@@ -47,4 +74,6 @@ services:
 
 volumes:
   pgdata:
+    driver: local
+  pgdata_master:
     driver: local

@@ -44,27 +44,42 @@ async def test_report_filters(async_client: AsyncClient):
     admin_headers = {"Authorization": f"Bearer {admin_login.json()['access_token']}"}
     member_headers = {"Authorization": f"Bearer {member_login.json()['access_token']}"}
 
+    # Crear donaciones con el nuevo formato
     donations = [
-        {"donation_type": "diezmo", "amount": "50.00", "donation_date": "2025-01-01"},
-        {"donation_type": "ofrenda", "amount": "30.00", "donation_date": "2025-02-01"},
+        {
+            "donor_name": "Donante 1",
+            "donor_document": "123",
+            "amount_tithe": 50.00,
+            "amount_offering": 0,
+            "amount_missions": 0,
+            "amount_special": 0,
+            "cash_amount": 50.00,
+            "transfer_amount": 0,
+            "donation_date": "2025-01-01",
+            "note": "",
+            "is_anonymous": False,
+        },
+        {
+            "donor_name": "Donante 2",
+            "donor_document": "456",
+            "amount_tithe": 0,
+            "amount_offering": 30.00,
+            "amount_missions": 0,
+            "amount_special": 0,
+            "cash_amount": 30.00,
+            "transfer_amount": 0,
+            "donation_date": "2025-02-01",
+            "note": "",
+            "is_anonymous": False,
+        },
     ]
     for d in donations:
-        payload = {
-            "donor_name": "X",
-            "donor_document": "1",
-            "payment_method": "efectivo",
-            "note": "",
-            **d,
-        }
-        await async_client.post("/api/donations", json=payload, headers=member_headers)
+        await async_client.post("/api/donations", json=d, headers=member_headers)
 
     resp_all = await async_client.get("/api/reports/summary", headers=admin_headers)
     assert resp_all.status_code == 200
-    assert resp_all.json()["total_donations"] == 2
-
-    resp_filtered = await async_client.get("/api/reports/summary?donation_type=diezmo", headers=admin_headers)
-    assert resp_filtered.status_code == 200
-    data = resp_filtered.json()
-    assert data["total_donations"] == 1
-    assert data["by_type"]["diezmo"] == 1
-
+    data = resp_all.json()
+    assert data["total_donations"] == 2
+    assert data["total_amount"] == 80.0
+    assert data["by_type"]["diezmo"] == 50.0
+    assert data["by_type"]["ofrenda"] == 30.0

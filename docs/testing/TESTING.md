@@ -8,10 +8,12 @@ tests/
 ├── test_security.py            # Tests de hashing y JWT
 ├── test_auth_flow.py           # Tests de autenticación
 ├── test_users_admin.py         # Tests de gestión de usuarios
-├── test_donations.py           # Tests de donaciones
+├── test_donations.py           # Tests de donaciones básicas
+├── test_donation_reports.py    # Tests de reportes de donaciones (nuevo)
+├── test_expenses.py            # Tests del módulo de gastos (nuevo)
 ├── test_documents.py           # Tests de documentos
 ├── test_events.py              # Tests de eventos e inscripciones
-├── test_reports.py             # Tests de reportes
+├── test_reports.py             # Tests de reportes legacy
 ├── test_reports_dashboard.py   # Tests del dashboard
 ├── test_reports_export.py      # Tests de exportación
 ├── test_e2e_flow.py            # Test end-to-end completo
@@ -51,7 +53,83 @@ async def test_register_and_login():
         assert response.status_code == 200
 ```
 
-### 3. Tests End-to-End
+### 3. Tests de Reportes de Donaciones (Nuevo)
+
+Prueban el formato actualizado de donaciones con montos separados y reportes para contadora.
+
+```python
+# test_donation_reports.py
+class TestMonthlyReport:
+    @pytest.mark.asyncio
+    async def test_get_monthly_report_success(self, async_client, admin_token, sample_donations):
+        """Test getting monthly report as admin."""
+        response = await async_client.get(
+            "/api/reports/donations/monthly?month=11&year=2024",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert "donations" in data
+        assert "summary" in data
+
+class TestWeeklyReport:
+    @pytest.mark.asyncio
+    async def test_get_weekly_report(self, async_client, admin_token, sample_donations):
+        """Test getting weekly report for accountant."""
+        response = await async_client.get(
+            "/api/reports/donations/weekly/45?year=2024",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert "diezmos_efectivo" in data
+        assert "diezmo_de_diezmos" in data
+```
+
+### 4. Tests del Módulo de Gastos (Nuevo)
+
+Prueban el módulo completo de gastos con categorías, etiquetas y flujo de aprobación.
+
+```python
+# test_expenses.py
+class TestExpenseCategories:
+    @pytest.mark.asyncio
+    async def test_create_category(self, async_client, admin_token):
+        payload = {
+            "name": "Servicios Públicos",
+            "color": "#3b82f6",
+            "monthly_budget": 500000,
+        }
+        
+        response = await async_client.post(
+            "/api/expenses/categories",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json=payload,
+        )
+        
+        assert response.status_code == 201
+
+class TestExpenses:
+    @pytest.mark.asyncio
+    async def test_expense_approval_flow(self, async_client, admin_token, sample_expense):
+        # 1. Aprobar gasto pendiente
+        response = await async_client.post(
+            f"/api/expenses/{sample_expense.id}/approve",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert response.json()["status"] == "approved"
+        
+        # 2. Marcar como pagado
+        response = await async_client.post(
+            f"/api/expenses/{sample_expense.id}/pay",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert response.json()["status"] == "paid"
+```
+
+### 5. Tests End-to-End
 
 Prueban flujos completos de usuario.
 
@@ -61,24 +139,10 @@ Prueban flujos completos de usuario.
 async def test_complete_donation_flow():
     # 1. Registrar usuario
     # 2. Login
-    # 3. Crear donación
+    # 3. Crear donación con montos separados
     # 4. Subir documento
-    # 5. Descargar documento
-    # 6. Ver reporte
-```
-
-### 4. Tests de Integración Frontend-Backend
-
-Prueban la conexión real entre contenedores.
-
-```python
-# test_integration_endpoints.py
-class TestFrontendConnection:
-    @pytest.mark.asyncio
-    async def test_frontend_loads(self):
-        async with httpx.AsyncClient() as client:
-            response = await client.get("http://localhost:3000")
-            assert response.status_code == 200
+    # 5. Ver reporte mensual
+    # 6. Exportar CSV
 ```
 
 ## Ejecutar Tests
@@ -86,7 +150,7 @@ class TestFrontendConnection:
 ### Requisitos
 
 ```bash
-pip install pytest pytest-asyncio httpx
+pip install pytest pytest-asyncio httpx aiosqlite
 ```
 
 ### Comandos
@@ -95,17 +159,20 @@ pip install pytest pytest-asyncio httpx
 # Todos los tests
 pytest -v
 
-# Solo tests unitarios
-pytest tests/test_security.py tests/test_health.py -v
+# Solo tests de donaciones y reportes
+pytest app/tests/test_donation_reports.py -v
 
-# Solo tests de integración
-pytest tests/test_auth_flow.py tests/test_donations.py -v
+# Solo tests de gastos
+pytest app/tests/test_expenses.py -v
+
+# Solo tests unitarios
+pytest app/tests/test_security.py app/tests/test_health.py -v
+
+# Tests de integración
+pytest app/tests/test_auth_flow.py app/tests/test_donations.py -v
 
 # Tests E2E (requiere DB)
-pytest tests/test_e2e_flow.py -v
-
-# Tests de integración frontend-backend (requiere contenedores)
-pytest tests/test_integration_endpoints.py -v
+pytest app/tests/test_e2e_flow.py -v
 
 # Con cobertura
 pytest --cov=app --cov-report=html -v
@@ -123,6 +190,9 @@ docker exec -it ekklesia_backend pytest -v
 
 # Con salida detallada
 docker exec -it ekklesia_backend pytest -v --tb=short
+
+# Solo tests nuevos
+docker exec -it ekklesia_backend pytest app/tests/test_donation_reports.py app/tests/test_expenses.py -v
 ```
 
 ## Configuración
@@ -144,57 +214,56 @@ markers =
 
 ```python
 # conftest.py
-@pytest.fixture
-async def async_client():
-    """Cliente HTTP para tests de API"""
-    async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
-    ) as client:
-        yield client
-
-@pytest.fixture
-async def auth_headers(async_client):
-    """Headers con token de autenticación"""
-    # Registrar y login
-    await async_client.post("/api/auth/register", json=TEST_USER)
-    response = await async_client.post("/api/auth/login", json=LOGIN_DATA)
-    token = response.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
-```
-
-## Base de Datos de Tests
-
-### SQLite en Memoria
-
-Para tests unitarios y de integración:
-
-```python
-# Override de sesión para tests
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-
-@pytest.fixture(autouse=True)
-async def setup_database():
-    engine = create_async_engine(TEST_DATABASE_URL)
+@pytest_asyncio.fixture
+async def test_db():
+    """Create a test database with SQLite."""
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    yield
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    
+    async_session = async_sessionmaker(engine, class_=AsyncSession)
+    
+    async def override_get_session():
+        async with async_session() as session:
+            yield session
+    
+    app.dependency_overrides[get_session] = override_get_session
+    yield async_session
+    app.dependency_overrides.clear()
+
+@pytest_asyncio.fixture
+async def admin_token(admin_user):
+    """Generate JWT token for admin user."""
+    return create_access_token(admin_user.id)
 ```
 
-### PostgreSQL de Tests
+## Tests de Nuevos Módulos
 
-Para tests E2E con Docker:
+### Reportes de Donaciones
 
-```yaml
-# docker-compose.test.yml
-services:
-  test_db:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_DB: ekklesia_test
-```
+| Test | Descripción | Estado |
+|------|-------------|--------|
+| `test_get_monthly_report_success` | Obtener reporte mensual | ✅ |
+| `test_get_monthly_report_summary` | Verificar cálculos del resumen | ✅ |
+| `test_export_monthly_csv` | Exportar CSV mensual | ✅ |
+| `test_get_weekly_report` | Obtener reporte semanal | ✅ |
+| `test_export_weekly_csv` | Exportar CSV semanal | ✅ |
+| `test_close_weekly_summary` | Cerrar semana con testigos | ✅ |
+
+### Módulo de Gastos
+
+| Test | Descripción | Estado |
+|------|-------------|--------|
+| `test_list_categories` | Listar categorías | ✅ |
+| `test_create_category` | Crear categoría | ✅ |
+| `test_create_tag` | Crear etiqueta | ✅ |
+| `test_create_expense` | Crear gasto | ✅ |
+| `test_approve_expense` | Aprobar gasto | ✅ |
+| `test_pay_expense` | Marcar pagado | ✅ |
+| `test_cancel_expense` | Cancelar gasto | ✅ |
+| `test_expense_summary` | Resumen de gastos | ✅ |
+| `test_monthly_expense_report` | Reporte mensual | ✅ |
+| `test_export_expenses_csv` | Exportar CSV | ✅ |
 
 ## Prevención de Falsos Positivos
 
@@ -225,14 +294,6 @@ async def test_slow_operation():
     # Test que podría colgar
 ```
 
-### 4. Retries para Flaky Tests
-
-```python
-@pytest.mark.flaky(reruns=3, reruns_delay=1)
-async def test_potentially_flaky():
-    # Test que puede fallar por timing
-```
-
 ## Cobertura de Tests
 
 ### Generar Reporte
@@ -243,41 +304,15 @@ pytest --cov=app --cov-report=html --cov-report=term-missing
 
 ### Objetivos de Cobertura
 
-| Módulo | Objetivo | Actual |
+| Módulo | Objetivo | Estado |
 |--------|----------|--------|
 | Routes | 90% | ✅ |
 | Services | 85% | ✅ |
 | Repositories | 80% | ✅ |
 | Models | 70% | ✅ |
 | Core | 90% | ✅ |
-
-## CI/CD Integration
-
-### GitHub Actions
-
-```yaml
-# .github/workflows/ci.yml
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: test
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run tests
-        run: pytest -v --tb=short
-```
+| Donation Reports | 85% | ✅ |
+| Expenses | 85% | ✅ |
 
 ## Checklist de Tests
 
@@ -294,3 +329,19 @@ jobs:
 - [ ] Tests de integración frontend-backend pasan
 - [ ] Cobertura >= 80%
 - [ ] No hay warnings de deprecation
+
+## Ejecutar Suite Completa
+
+```bash
+# 1. Levantar contenedores
+docker-compose up -d
+
+# 2. Esperar a que estén listos
+sleep 10
+
+# 3. Ejecutar todos los tests
+docker exec -it ekklesia_backend pytest -v --tb=short
+
+# 4. Ver resultados
+echo "Tests completados"
+```
