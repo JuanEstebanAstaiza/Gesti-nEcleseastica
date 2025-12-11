@@ -58,3 +58,6 @@ class DocumentService:
     async def list_all(self):
         return await self.repo.list_all()
 
+    async def list_by_user(self, user_id: int):
+        return await self.repo.list_by_user(user_id)
+

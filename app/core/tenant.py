@@ -14,6 +14,7 @@ current_db_session: ContextVar[Optional[AsyncSession]] = ContextVar("current_db_
 
 # Cache de engines por tenant
 _tenant_engines: dict[str, any] = {}
+_master_engine = None
 
 
 def get_tenant_db_url(db_name: str) -> str:
@@ -43,6 +44,15 @@ async def get_tenant_session(db_name: str) -> AsyncSession:
     engine = await get_tenant_engine(db_name)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
     return session_factory()
+
+
+async def get_master_engine():
+    """Engine para la base master usando la URL dedicada"""
+    global _master_engine
+    if _master_engine is None:
+        db_url = get_master_db_url()
+        _master_engine = create_async_engine(db_url, future=True, echo=False, pool_pre_ping=True)
+    return _master_engine
 
 
 def extract_tenant_from_request(request: Request) -> Optional[str]:
@@ -126,7 +136,7 @@ class TenantMiddleware:
         from sqlalchemy import select, text
         
         try:
-            engine = await get_tenant_engine("ekklesia_master")
+            engine = await get_master_engine()
             async with engine.connect() as conn:
                 result = await conn.execute(
                     text("SELECT id, slug, name, db_name, is_active FROM tenants WHERE slug = :slug"),

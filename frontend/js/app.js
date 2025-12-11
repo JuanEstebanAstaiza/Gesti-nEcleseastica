@@ -5,6 +5,22 @@
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:6076/api'
   : '/api';
+// Modo demo: usar tenant por query cuando estamos en localhost sin subdominio
+const DEMO_TENANT = 'comunidad-de-fe';
+
+function getCurrentTenant() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('tenant')) return params.get('tenant');
+  // TODO: si hubiera subdominio, se podría inferir aquí
+  return DEMO_TENANT;
+}
+
+function publicUrl(path) {
+  const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  if (!isLocal) return `${API_BASE}${path}`;
+  const sep = path.includes('?') ? '&' : '?';
+  return `${API_BASE}${path}${sep}tenant=${getCurrentTenant()}`;
+}
 
 // =====================================================
 // STATE
@@ -144,6 +160,7 @@ function navigateToPage(page) {
     case 'home':
       loadFeaturedEvents();
       loadChurchConfig();
+      loadPublicAnnouncements();
       break;
     case 'about':
       loadAboutContent();
@@ -165,7 +182,7 @@ function navigateToPage(page) {
 // =====================================================
 async function loadChurchConfig() {
   try {
-    const response = await fetch(`${API_BASE}/public/config`);
+    const response = await fetch(publicUrl('/public/config'));
     if (response.ok) {
       const config = await response.json();
       
@@ -237,7 +254,7 @@ async function loadFeaturedEvents() {
   if (!container) return;
   
   try {
-    const response = await fetch(`${API_BASE}/public/events?limit=3`);
+    const response = await fetch(publicUrl('/public/events?limit=3'));
     if (response.ok) {
       const events = await response.json();
       
@@ -285,7 +302,7 @@ async function loadAboutContent() {
   
   try {
     // Try to load church config for about info
-    const response = await fetch(`${API_BASE}/public/config`);
+    const response = await fetch(publicUrl('/public/config'));
     if (response.ok) {
       const config = await response.json();
       
@@ -334,7 +351,7 @@ async function loadPublicEvents() {
   `;
   
   try {
-    const response = await fetch(`${API_BASE}/public/events?limit=20&upcoming=false`);
+    const response = await fetch(publicUrl('/public/events?limit=20&upcoming=false'));
     if (response.ok) {
       const events = await response.json();
       
@@ -384,7 +401,7 @@ async function loadPublicEvents() {
 // =====================================================
 async function loadDonationInfo() {
   try {
-    const response = await fetch(`${API_BASE}/public/donation-info`);
+    const response = await fetch(publicUrl('/public/donation-info'));
     if (response.ok) {
       const info = await response.json();
       
@@ -440,9 +457,57 @@ async function loadDonationInfo() {
 }
 
 // =====================================================
+// PUBLIC ANNOUNCEMENTS (landing)
+// =====================================================
+async function loadPublicAnnouncements() {
+  const container = $('#public-announcements');
+  if (!container) return;
+
+  try {
+    const response = await fetch(publicUrl('/public/announcements?limit=6'));
+    if (response.ok) {
+      const anns = await response.json();
+      if (!anns.length) {
+        container.innerHTML = `
+          <p class="empty-message">No hay anuncios disponibles</p>
+        `;
+        return;
+      }
+
+      container.innerHTML = anns.map(a => `
+        <div class="event-preview-card">
+          <div class="event-preview-content">
+            <span class="event-preview-date">
+              <i class="ri-notification-3-line"></i>
+              ${a.priority || 'Normal'}
+            </span>
+            <h3>${a.title || 'Anuncio'}</h3>
+            <p>${a.content || ''}</p>
+            <div class="event-meta" style="margin-top:8px;">
+              ${a.start_date ? `<span><i class="ri-calendar-line"></i> ${formatDate(a.start_date)}</span>` : ''}
+              ${a.end_date ? `<span><i class="ri-timer-line"></i> Hasta ${formatDate(a.end_date)}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      container.innerHTML = `<p class="empty-message">Error al cargar anuncios</p>`;
+    }
+  } catch (error) {
+    console.error('Error loading announcements:', error);
+    container.innerHTML = `<p class="empty-message">Error de conexión</p>`;
+  }
+}
+
+// =====================================================
 // EVENT REGISTRATION
 // =====================================================
 function openEventRegistration(eventId, eventName) {
+  if (!state.accessToken) {
+    showToast('Debes iniciar sesión para inscribirte', 'warning');
+    openAuthModal();
+    return;
+  }
   const modal = $('#registration-modal');
   if (modal) {
     $('#reg-event-id').value = eventId;
@@ -553,11 +618,42 @@ async function loadUserProfile() {
 function updateUserUI() {
   if (state.user) {
     $('#user-name').textContent = state.user.full_name || state.user.email;
-    $('#user-role').textContent = state.user.role || 'member';
+    const roleLabel = {
+      admin: 'Administrador',
+      superadmin: 'Super Administrador',
+      member: 'Miembro',
+    }[state.user.role] || state.user.role || 'Miembro';
+    $('#user-role').textContent = roleLabel;
     
-    // Show admin sections if admin
-    if (state.user.role === 'admin') {
-      $$('.admin-only').forEach(el => el.style.display = '');
+    // Mostrar/ocultar secciones según rol
+    const isAdmin = state.user.role === 'admin' || state.user.role === 'superadmin';
+    $$('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
+    // Mostrar botones de comunidad (anuncios) si admin
+    if (isAdmin) {
+      $('#announcement-form-card')?.classList.add('hidden');
+    }
+    // Ocultar donaciones y documentos para miembros
+    if (!isAdmin) {
+      const hideIds = ['section-donations', 'section-documents', 'section-expenses', 'section-reports'];
+      hideIds.forEach(id => {
+        const sec = document.getElementById(id);
+        if (sec) sec.classList.remove('active');
+      });
+      // Ajustar navegación: desactivar items que no aplican
+      $$('.sidebar-nav .nav-item').forEach(item => {
+        const disallowed = ['donations', 'documents', 'expenses', 'reports'];
+        if (disallowed.includes(item.dataset.section)) {
+          item.style.display = 'none';
+          item.classList.remove('active');
+        }
+      });
+      // Enfocar en eventos
+      navigateToSection('events');
+    } else {
+      // Restaurar visibilidad para admin
+      $$('.sidebar-nav .nav-item').forEach(item => {
+        item.style.display = '';
+      });
     }
   }
 }
@@ -603,6 +699,14 @@ function navigateToSection(section) {
   }
   
   // Load section data
+  const isAdmin = state.user?.role === 'admin' || state.user?.role === 'superadmin';
+  const disallowedForMember = ['donations', 'documents', 'expenses', 'reports'];
+  if (!isAdmin && disallowedForMember.includes(section)) {
+    // Reenviar a eventos si la sección no es permitida
+    state.currentSection = 'events';
+    return navigateToSection('events');
+  }
+
   switch (section) {
     case 'dashboard':
       loadDashboard();
@@ -615,6 +719,9 @@ function navigateToSection(section) {
       break;
     case 'events':
       loadUserEvents();
+      break;
+    case 'community':
+      loadAnnouncements();
       break;
     case 'expenses':
       loadExpenses();
@@ -702,7 +809,8 @@ async function loadDocuments() {
   if (!container) return;
   
   try {
-    const response = await apiRequest('/documents/');
+    const endpoint = state.user?.role === 'admin' ? '/documents' : '/documents/me';
+    const response = await apiRequest(endpoint);
     if (response && response.ok) {
       const docs = await response.json();
       
@@ -729,6 +837,189 @@ async function loadDocuments() {
   }
 }
 
+// -----------------------------------------------------
+// Document upload handlers
+// -----------------------------------------------------
+function initDocumentUpload() {
+  const formCard = $('#document-form-card');
+  const form = $('#document-form');
+  const newBtn = $('#new-document-btn');
+  const fileInput = $('#doc-file');
+  const dropZone = $('#file-drop-zone');
+  const preview = $('#file-preview');
+  const fileNameLabel = $('#file-name');
+  const removeFileBtn = $('#remove-file');
+
+  if (newBtn) {
+    newBtn.addEventListener('click', () => {
+      formCard?.classList.toggle('hidden');
+    });
+  }
+
+  if (dropZone && fileInput) {
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer?.files?.length) {
+        fileInput.files = e.dataTransfer.files;
+        updateFilePreview();
+      }
+    });
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener('change', updateFilePreview);
+  }
+
+  if (removeFileBtn) {
+    removeFileBtn.addEventListener('click', () => {
+      if (fileInput) fileInput.value = '';
+      preview?.classList.add('hidden');
+    });
+  }
+
+  if (form) {
+    form.addEventListener('submit', handleDocumentSubmit);
+  }
+
+  function updateFilePreview() {
+    if (!fileInput?.files?.length) {
+      preview?.classList.add('hidden');
+      return;
+    }
+    const file = fileInput.files[0];
+    if (fileNameLabel) fileNameLabel.textContent = file.name;
+    preview?.classList.remove('hidden');
+  }
+}
+
+async function handleDocumentSubmit(event) {
+  event.preventDefault();
+  const form = event.target;
+  const fileInput = $('#doc-file');
+  if (!fileInput?.files?.length) {
+    showToast('Selecciona un archivo primero', 'warning');
+    return;
+  }
+
+  const fd = new FormData(form);
+  const file = fileInput.files[0];
+  fd.append('file', file);
+
+  try {
+    const response = await fetch(`${API_BASE}/documents`, {
+      method: 'POST',
+      headers: state.accessToken ? { Authorization: `Bearer ${state.accessToken}` } : undefined,
+      body: fd,
+    });
+
+    if (response.ok) {
+      showToast('Documento subido', 'success');
+      form.reset();
+      $('#document-form-card')?.classList.add('hidden');
+      $('#file-preview')?.classList.add('hidden');
+      await loadDocuments();
+    } else {
+      const err = await response.json();
+      showToast(err.detail || 'Error al subir documento', 'error');
+    }
+  } catch (error) {
+    console.error(error);
+    showToast('Error de conexión', 'error');
+  }
+}
+
+async function handleAnnouncementSubmit(event) {
+  event.preventDefault();
+  const form = event.target;
+  const fd = new FormData(form);
+  const payload = {
+    title: fd.get('title'),
+    content: fd.get('content') || null,
+    announcement_type: fd.get('announcement_type') || 'general',
+    priority: parseInt(fd.get('priority') || '1', 10),
+    is_public: fd.get('is_public') === 'on',
+    start_date: fd.get('start_date') || null,
+    end_date: fd.get('end_date') || null,
+  };
+
+  try {
+    const response = await apiRequest('/admin/announcements', { method: 'POST', body: payload });
+    if (response?.ok) {
+      showToast('Anuncio publicado', 'success');
+      form.reset();
+      $('#announcement-form-card')?.classList.add('hidden');
+      loadAnnouncements(); // refresca panel
+      loadPublicAnnouncements(); // refresca landing
+    } else {
+      const err = await response.json();
+      showToast(err.detail || 'Error al publicar', 'error');
+    }
+  } catch (err) {
+    showToast('Error de conexión', 'error');
+  }
+}
+
+async function handleCreateTag(event) {
+  event.preventDefault();
+  const name = $('#expense-tag-name')?.value?.trim();
+  if (!name) {
+    showToast('Nombre de etiqueta requerido', 'warning');
+    return;
+  }
+  try {
+    const response = await apiRequest('/expenses/tags', {
+      method: 'POST',
+      body: { name },
+    });
+    if (response?.ok) {
+      showToast('Etiqueta creada', 'success');
+      $('#expense-tag-name').value = '';
+    } else {
+      const err = await response.json();
+      showToast(err.detail || 'Error al crear etiqueta', 'error');
+    }
+  } catch (err) {
+    showToast('Error de conexión', 'error');
+  }
+}
+
+async function approveExpense(id) {
+  try {
+    const response = await apiRequest(`/expenses/${id}/approve`, { method: 'POST' });
+    if (response?.ok) {
+      showToast('Gasto aprobado', 'success');
+      loadExpenses();
+    } else {
+      const err = await response.json();
+      showToast(err.detail || 'No se pudo aprobar', 'error');
+    }
+  } catch (err) {
+    showToast('Error de conexión', 'error');
+  }
+}
+
+async function payExpense(id) {
+  try {
+    const response = await apiRequest(`/expenses/${id}/pay`, { method: 'POST' });
+    if (response?.ok) {
+      showToast('Gasto pagado', 'success');
+      loadExpenses();
+    } else {
+      const err = await response.json();
+      showToast(err.detail || 'No se pudo pagar', 'error');
+    }
+  } catch (err) {
+    showToast('Error de conexión', 'error');
+  }
+}
+
 // =====================================================
 // USER EVENTS
 // =====================================================
@@ -737,7 +1028,10 @@ async function loadUserEvents() {
   if (!container) return;
   
   try {
-    const response = await apiRequest('/events/');
+    const endpoint = state.user?.role === 'admin' || state.user?.role === 'superadmin'
+      ? '/admin/events'
+      : '/events/';
+    const response = await apiRequest(endpoint);
     if (response && response.ok) {
       const events = await response.json();
       
@@ -760,11 +1054,125 @@ async function loadUserEvents() {
             <span><i class="ri-calendar-line"></i> ${formatDate(event.start_date)}</span>
             ${event.capacity ? `<span><i class="ri-group-line"></i> ${event.capacity}</span>` : ''}
           </div>
+          ${ (state.user?.role === 'admin' || state.user?.role === 'superadmin') ? `
+          <div style="margin-top:8px;">
+            <button class="btn btn-secondary btn-sm" onclick="editEvent(${event.id})" disabled>
+              <i class="ri-edit-line"></i> Editar
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="deleteEvent(${event.id})">
+              <i class="ri-delete-bin-line"></i> Eliminar
+            </button>
+          </div>` : '' }
         </div>
       `).join('');
     }
   } catch (error) {
     console.error('Error loading events:', error);
+  }
+}
+
+async function handleEventSubmit(event) {
+  event.preventDefault();
+  const form = event.target;
+  const formData = new FormData(form);
+  const payload = {
+    name: formData.get('name'),
+    description: formData.get('description') || null,
+    start_date: formData.get('start_date') || null,
+    end_date: formData.get('end_date') || null,
+    capacity: formData.get('capacity') ? parseInt(formData.get('capacity'), 10) : null,
+  };
+  try {
+    const response = await apiRequest('/admin/events', { method: 'POST', body: payload });
+    if (response?.ok) {
+      showToast('Evento creado', 'success');
+      form.reset();
+      $('#event-form-card')?.classList.add('hidden');
+      loadUserEvents();
+    } else {
+      const err = await response.json();
+      showToast(err.detail || 'Error al crear evento', 'error');
+    }
+  } catch (err) {
+    showToast('Error de conexión', 'error');
+  }
+}
+
+async function deleteEvent(eventId) {
+  if (!confirm('¿Eliminar evento?')) return;
+  try {
+    const response = await apiRequest(`/admin/events/${eventId}`, { method: 'DELETE' });
+    if (response?.ok || response?.status === 204) {
+      showToast('Evento eliminado', 'success');
+      loadUserEvents();
+    } else {
+      const err = await response.json();
+      showToast(err.detail || 'No se pudo eliminar', 'error');
+    }
+  } catch (err) {
+    showToast('Error de conexión', 'error');
+  }
+}
+
+// =====================================================
+// ANNOUNCEMENTS (Comunidad)
+// =====================================================
+async function loadAnnouncements() {
+  const container = $('#announcements-list');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="empty-state-full">
+      <i class="ri-loader-4-line spin"></i>
+      <h3>Cargando anuncios...</h3>
+    </div>
+  `;
+
+  try {
+    const response = await fetch(publicUrl('/public/announcements?limit=20'));
+    if (response.ok) {
+      const anns = await response.json();
+      if (!anns.length) {
+        container.innerHTML = `
+          <div class="empty-state-full">
+            <i class="ri-notification-off-line"></i>
+            <h3>No hay anuncios</h3>
+            <p>Cuando haya anuncios, aparecerán aquí.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = anns.map(a => `
+        <div class="event-card">
+          <div class="event-meta" style="margin-bottom:8px;">
+            <span><i class="ri-alarm-warning-line"></i> ${a.priority || 'Normal'}</span>
+            ${a.is_public ? '<span><i class="ri-eye-line"></i> Público</span>' : ''}
+          </div>
+          <h3>${a.title || 'Anuncio'}</h3>
+          <p>${a.content || ''}</p>
+          <div class="event-meta">
+            ${a.start_date ? `<span><i class="ri-calendar-line"></i> ${formatDate(a.start_date)}</span>` : ''}
+            ${a.end_date ? `<span><i class="ri-timer-line"></i> Hasta ${formatDate(a.end_date)}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+    } else {
+      container.innerHTML = `
+        <div class="empty-state-full">
+          <i class="ri-alert-line"></i>
+          <h3>Error al cargar anuncios</h3>
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Error loading announcements:', error);
+    container.innerHTML = `
+      <div class="empty-state-full">
+        <i class="ri-alert-line"></i>
+        <h3>Error de conexión</h3>
+      </div>
+    `;
   }
 }
 
@@ -812,6 +1220,14 @@ function renderExpensesTable(expenses) {
         <button class="btn btn-ghost btn-sm" onclick="viewExpense(${e.id})">
           <i class="ri-eye-line"></i>
         </button>
+        ${(state.user?.role === 'admin' || state.user?.role === 'superadmin') ? `
+          <button class="btn btn-ghost btn-sm" onclick="approveExpense(${e.id})" ${e.status !== 'pendiente' ? 'disabled' : ''}>
+            <i class="ri-checkbox-circle-line"></i>
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="payExpense(${e.id})" ${e.status !== 'aprobado' ? 'disabled' : ''}>
+            <i class="ri-bank-card-line"></i>
+          </button>
+        ` : ''}
       </td>
     </tr>
   `).join('');
@@ -897,6 +1313,16 @@ function initEventListeners() {
   
   // Donation form
   $('#donation-form')?.addEventListener('submit', handleDonationSubmit);
+  $('#event-form')?.addEventListener('submit', handleEventSubmit);
+
+  // Announcement form
+  $('#new-announcement-btn')?.addEventListener('click', () => {
+    $('#announcement-form-card')?.classList.toggle('hidden');
+  });
+  $('#announcement-form')?.addEventListener('submit', handleAnnouncementSubmit);
+
+  // Expense tag
+  $('#create-tag-btn')?.addEventListener('click', handleCreateTag);
   
   // Registration modal close
   $$('.modal-close-btn').forEach(btn => {
@@ -912,6 +1338,9 @@ function initEventListeners() {
       $$('.report-panel').forEach(p => p.classList.toggle('active', p.id === `report-${tab.dataset.report}`));
     });
   });
+
+  // Documents
+  initDocumentUpload();
 }
 
 // =====================================================
@@ -941,15 +1370,29 @@ async function handleDonationSubmit(event) {
     note: formData.get('note') || null,
   };
   
+  const supportFile = $('#donation-support-file')?.files?.[0];
+  
   try {
-    const response = await apiRequest('/donations/', {
+    const response = await apiRequest('/donations', {
       method: 'POST',
       body: data,
     });
     
     if (response && response.ok) {
+      const donation = await response.json();
+      
+      // Si hay soporte adjunto, subirlo ligado a la donación
+      if (supportFile) {
+        const uploaded = await uploadDonationSupport(donation.id, supportFile);
+        if (uploaded) {
+          showToast('Soporte adjuntado', 'success');
+        }
+      }
+      
       showToast('Donación registrada exitosamente', 'success');
       form.reset();
+      if ($('#donation-support-file')) $('#donation-support-file').value = '';
+      $('#file-preview')?.classList.add('hidden');
       $('#donation-form-card')?.classList.add('hidden');
       loadDonations();
     } else {
@@ -958,6 +1401,30 @@ async function handleDonationSubmit(event) {
     }
   } catch (error) {
     showToast('Error de conexión', 'error');
+  }
+}
+
+async function uploadDonationSupport(donationId, file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('link_type', 'donation');
+  fd.append('ref_id', donationId);
+  fd.append('is_public', false);
+
+  try {
+    const response = await fetch(`${API_BASE}/documents`, {
+      method: 'POST',
+      headers: state.accessToken ? { Authorization: `Bearer ${state.accessToken}` } : undefined,
+      body: fd,
+    });
+    if (response.ok) return true;
+    const err = await response.json();
+    showToast(err.detail || 'No se pudo adjuntar el soporte', 'warning');
+    return false;
+  } catch (err) {
+    console.error(err);
+    showToast('Error de conexión al adjuntar soporte', 'warning');
+    return false;
   }
 }
 
@@ -989,4 +1456,5 @@ if (document.readyState === 'loading') {
 // Make functions available globally for onclick handlers
 window.openEventRegistration = openEventRegistration;
 window.viewExpense = (id) => console.log('View expense:', id);
+
 

@@ -10,7 +10,7 @@ from app.api.routes.ws import manager
 router = APIRouter(prefix="/donations", tags=["donations"])
 
 
-@router.post("", response_model=DonationRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=DonationRead, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin)])
 async def create_donation(
     payload: DonationCreate,
     session=Depends(get_session),

@@ -1849,6 +1849,9 @@
             <button class="btn btn-ghost btn-sm" onclick="deleteBackup('${b.filename}')" title="Eliminar">
               <i class="ri-delete-bin-line text-red"></i>
             </button>
+            <button class="btn btn-ghost btn-sm" onclick="downloadBackup('${b.filename}')" title="Descargar">
+              <i class="ri-download-2-line"></i>
+            </button>
           </td>
         </tr>
       `).join('');
@@ -1903,6 +1906,58 @@
         showToast('Error al eliminar', 'error');
       }
     }
+
+  async function downloadBackup(filename) {
+    try {
+      const response = await fetch(`${API_BASE}/backups/${filename}/download`, {
+        headers: state.accessToken ? { Authorization: `Bearer ${state.accessToken}` } : undefined,
+      });
+      if (!response.ok) {
+        showToast('No se pudo descargar', 'error');
+        return;
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      showToast('Error al descargar', 'error');
+    }
+  }
+
+  // Upload backup file
+  const backupUploadInput = document.createElement('input');
+  backupUploadInput.type = 'file';
+  backupUploadInput.accept = '.sql,.sql.gz';
+  backupUploadInput.style.display = 'none';
+  document.body.appendChild(backupUploadInput);
+  backupUploadInput.addEventListener('change', async () => {
+    if (!backupUploadInput.files.length) return;
+    const file = backupUploadInput.files[0];
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const response = await fetch(`${API_BASE}/backups/upload`, {
+        method: 'POST',
+        headers: state.accessToken ? { Authorization: `Bearer ${state.accessToken}` } : undefined,
+        body: fd,
+      });
+      if (response.ok) {
+        showToast('Backup subido', 'success');
+        loadBackups();
+      } else {
+        const err = await response.json();
+        showToast(err.detail || 'Error al subir', 'error');
+      }
+    } catch (error) {
+      showToast('Error al subir', 'error');
+    } finally {
+      backupUploadInput.value = '';
+    }
+  });
 
     // ========================================
     // UTILITIES

@@ -12,6 +12,7 @@ from app.api.schemas.church import (
     PublicContentCreate, PublicContentUpdate, PublicContentRead,
     AnnouncementCreate, AnnouncementUpdate, AnnouncementRead
 )
+from app.api.schemas.event import EventCreate, EventRead
 from app.core.tenant import get_tenant_db, require_tenant
 from app.core.deps import require_admin
 from app.models.user import User
@@ -488,6 +489,82 @@ async def delete_content(
     await session.execute(
         text("DELETE FROM public_content WHERE id = :id"),
         {"id": content_id}
+    )
+    await session.commit()
+    return None
+
+
+# ============== Anuncios ==============
+# ============== Eventos ==============
+
+@router.get("/events", response_model=list[EventRead])
+async def list_events_admin(
+    session: AsyncSession = Depends(get_tenant_db),
+    current_user: User = Depends(require_admin)
+):
+    """Lista todos los eventos del tenant (vista admin)"""
+    result = await session.execute(
+        text("SELECT id, name, description, start_date, end_date, capacity, created_by_id FROM events ORDER BY start_date DESC NULLS LAST, id DESC")
+    )
+    events = result.fetchall()
+    return [
+        EventRead(
+            id=e.id,
+            name=e.name,
+            description=e.description,
+            start_date=e.start_date,
+            end_date=e.end_date,
+            capacity=e.capacity,
+            created_by_id=e.created_by_id
+        ) for e in events
+    ]
+
+
+@router.post("/events", response_model=EventRead, status_code=status.HTTP_201_CREATED)
+async def create_event_admin(
+    data: EventCreate,
+    session: AsyncSession = Depends(get_tenant_db),
+    current_user: User = Depends(require_admin)
+):
+    """Crea un evento"""
+    result = await session.execute(
+        text("""
+            INSERT INTO events (name, description, start_date, end_date, capacity, is_public, created_by_id)
+            VALUES (:name, :description, :start_date, :end_date, :capacity, TRUE, :created_by_id)
+            RETURNING id, name, description, start_date, end_date, capacity, created_by_id
+        """),
+        {
+            "name": data.name,
+            "description": data.description,
+            "start_date": data.start_date,
+            "end_date": data.end_date,
+            "capacity": data.capacity,
+            "created_by_id": current_user.id,
+        }
+    )
+    e = result.fetchone()
+    await session.commit()
+    return EventRead(
+        id=e.id,
+        name=e.name,
+        description=e.description,
+        start_date=e.start_date,
+        end_date=e.end_date,
+        capacity=e.capacity,
+        created_by_id=e.created_by_id
+    )
+
+
+@router.delete("/events/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_event_admin(
+    event_id: int,
+    session: AsyncSession = Depends(get_tenant_db),
+    current_user: User = Depends(require_admin)
+):
+    """Elimina un evento"""
+    await session.execute(
+        text("DELETE FROM events WHERE id = :id"),
+        {"id": event_id}
     )
     await session.commit()
     return None

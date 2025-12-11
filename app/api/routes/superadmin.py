@@ -1,7 +1,8 @@
 """
 Rutas del Super Administrador - Gestión de la plataforma
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi.responses import FileResponse
 from sqlalchemy import select, text, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -612,6 +613,52 @@ async def delete_backup(
     return {"message": f"Backup {filename} eliminado"}
 
 
+@router.get("/backups/{filename}/download")
+async def download_backup(
+    filename: str,
+    current_admin = Depends(get_current_superadmin)
+):
+    """Descarga un archivo de backup"""
+    import re
+    from pathlib import Path
+    
+    if not re.match(r'^[\w\-\.]+\.sql(\.gz)?$', filename):
+        raise HTTPException(status_code=400, detail="Nombre de archivo inválido")
+    
+    backup_path = Path("./backups") / filename
+    if not backup_path.exists():
+        raise HTTPException(status_code=404, detail="Backup no encontrado")
+    
+    return FileResponse(backup_path, media_type="application/octet-stream", filename=filename)
+
+
+@router.post("/backups/upload")
+async def upload_backup(
+    file: UploadFile = File(...),
+    current_admin = Depends(get_current_superadmin)
+):
+    """Sube un archivo de backup a la carpeta local (no restaura)"""
+    import re
+    from pathlib import Path
+    
+    if not re.match(r'^[\w\-\.]+\.sql(\.gz)?$', file.filename):
+        raise HTTPException(status_code=400, detail="Nombre de archivo inválido")
+    
+    backup_dir = Path("./backups")
+    backup_dir.mkdir(exist_ok=True)
+    dest = backup_dir / file.filename
+    
+    content = await file.read()
+    dest.write_bytes(content)
+    
+    stat = dest.stat()
+    return {
+        "message": "Backup subido",
+        "filename": dest.name,
+        "size_mb": round(stat.st_size / (1024**2), 2)
+    }
+
+
 # ============== Métricas de Ingresos ==============
 
 @router.get("/revenue")
@@ -746,10 +793,13 @@ async def delete_plan(
     current_admin = Depends(get_current_superadmin)
 ):
     """Desactiva un plan (soft delete)"""
-    await session.execute(
-        text("UPDATE subscription_plans SET is_active = FALSE WHERE id = :id"),
+    result = await session.execute(
+        text("UPDATE subscription_plans SET is_active = FALSE WHERE id = :id RETURNING id"),
         {"id": plan_id}
     )
+    row = result.fetchone()
     await session.commit()
-    return None
+    if not row:
+        raise HTTPException(status_code=404, detail="Plan no encontrado")
+    return {"message": "Plan desactivado", "id": plan_id}
 

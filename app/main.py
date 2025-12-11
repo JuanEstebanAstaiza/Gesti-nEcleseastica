@@ -32,7 +32,7 @@ def create_application() -> FastAPI:
     )
 
     # Tenant middleware para multi-tenancy
-    # app.add_middleware(TenantMiddleware)  # Descomentar cuando esté listo
+    app.add_middleware(TenantMiddleware)
 
     app.include_router(api_router, prefix="/api")
     return app

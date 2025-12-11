@@ -99,6 +99,16 @@
           </div>
         </div>
       </section>
+
+      <!-- Public Announcements -->
+      <section class="section section-events-preview">
+        <div class="container">
+          <h2 class="section-title">Comunicados</h2>
+          <div class="events-preview-grid" id="public-announcements">
+            <p class="empty-message">Cargando anuncios...</p>
+          </div>
+        </div>
+      </section>
     </main>
 
     <!-- Page: ABOUT -->
@@ -330,6 +340,10 @@
         <a href="#" class="nav-item" data-section="events">
           <i class="ri-calendar-check-line"></i>
           <span>Eventos</span>
+        </a>
+        <a href="#" class="nav-item" data-section="community">
+          <i class="ri-notification-3-line"></i>
+          <span>Comunidad</span>
         </a>
 
         <!-- Admin Section -->
@@ -568,6 +582,13 @@
                 <label>Nota (opcional)</label>
                 <textarea name="note" rows="2"></textarea>
               </div>
+
+              <!-- Soporte de pago -->
+              <div class="form-group full-width">
+                <label>Soporte de pago (PDF/Imagen)</label>
+                <input type="file" id="donation-support-file" accept=".pdf,.png,.jpg,.jpeg" />
+                <small class="text-muted">Opcional. Se adjunta a la donación creada.</small>
+              </div>
               
               <div class="form-actions">
                 <button type="button" class="btn btn-secondary close-form-btn">Cancelar</button>
@@ -747,6 +768,88 @@
         </div>
       </section>
 
+      <!-- Community Section (Announcements) -->
+      <section id="section-community" class="section">
+        <header class="section-header">
+          <div>
+            <h1>Comunidad</h1>
+            <p>Anuncios y comunicados públicos de la iglesia</p>
+          </div>
+          <div class="header-actions admin-only" style="display:none;">
+            <button class="btn btn-primary" id="new-announcement-btn">
+              <i class="ri-notification-3-line"></i>
+              <span>Nuevo Anuncio</span>
+            </button>
+          </div>
+        </header>
+
+        <div id="announcement-form-card" class="card form-card hidden admin-only" style="display:none;">
+          <div class="card-header">
+            <h3>Crear anuncio</h3>
+            <button class="btn btn-ghost btn-icon close-form-btn">
+              <i class="ri-close-line"></i>
+            </button>
+          </div>
+          <div class="card-body">
+            <form id="announcement-form" class="form-grid">
+              <div class="form-group full-width">
+                <label>Título *</label>
+                <input type="text" name="title" required />
+              </div>
+              <div class="form-group full-width">
+                <label>Contenido</label>
+                <textarea name="content" rows="3"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Tipo</label>
+                <select name="announcement_type">
+                  <option value="general">General</option>
+                  <option value="urgente">Urgente</option>
+                  <option value="evento">Evento</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Prioridad</label>
+                <select name="priority">
+                  <option value="1">Baja</option>
+                  <option value="2">Media</option>
+                  <option value="3" selected>Alta</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Fecha inicio</label>
+                <input type="date" name="start_date" />
+              </div>
+              <div class="form-group">
+                <label>Fecha fin</label>
+                <input type="date" name="end_date" />
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" name="is_public" checked />
+                  <span>Mostrar en público</span>
+                </label>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary close-form-btn">Cancelar</button>
+                <button type="submit" class="btn btn-primary">
+                  <i class="ri-save-line"></i>
+                  <span>Publicar</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div id="announcements-list" class="events-grid">
+          <div class="empty-state-full">
+            <i class="ri-notification-off-line"></i>
+            <h3>No hay anuncios</h3>
+            <p>Cuando haya anuncios, aparecerán aquí.</p>
+          </div>
+        </div>
+      </section>
+
       <!-- Expenses Section (Admin Only) -->
       <section id="section-expenses" class="section">
         <header class="section-header">
@@ -891,6 +994,17 @@
                   </tr>
                 </tbody>
               </table>
+            </div>
+
+            <!-- Admin-only quick actions -->
+            <div class="form-row admin-only" style="margin-top:16px; gap:12px; display:none;">
+              <div class="form-group">
+                <label>Etiqueta nueva</label>
+                <div style="display:flex; gap:8px;">
+                  <input type="text" id="expense-tag-name" placeholder="Nombre etiqueta" class="form-input">
+                  <button class="btn btn-secondary btn-sm" id="create-tag-btn"><i class="ri-price-tag-3-line"></i> Crear etiqueta</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

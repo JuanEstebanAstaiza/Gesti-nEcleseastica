@@ -4,6 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.schemas import LoginRequest, TokenPair, RefreshRequest, UserCreate, UserRead
 from app.api.services.auth import AuthService
 from app.db.session import get_session
+from app.core.deps import get_current_user
+from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -27,4 +29,9 @@ async def refresh_token(data: RefreshRequest, session: AsyncSession = Depends(ge
     service = AuthService(session)
     tokens = service.refresh(data.refresh_token)
     return tokens
+
+
+@router.get("/me", response_model=UserRead)
+async def me(current_user: User = Depends(get_current_user)):
+    return current_user
 
