@@ -1,6 +1,5 @@
 """Schemas para configuración de iglesia y contenido público"""
 from datetime import datetime
-from typing import Any
 from pydantic import BaseModel, EmailStr, ConfigDict
 
 
@@ -44,7 +43,7 @@ class ChurchConfigUpdate(BaseModel):
     donation_link: str | None = None
     
     # Horarios
-    service_schedule: Any | None = None
+    service_schedule: list | dict | None = None
 
 
 class ChurchConfigRead(BaseModel):
@@ -76,7 +75,7 @@ class ChurchConfigRead(BaseModel):
     bank_info: dict | None
     paypal_email: str | None
     donation_link: str | None
-    service_schedule: Any | None
+    service_schedule: list | dict | None
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -109,7 +108,7 @@ class ChurchPublicInfo(BaseModel):
     social_tiktok: str | None
     donation_info: str | None
     donation_link: str | None
-    service_schedule: Any | None
+    service_schedule: list | dict | None
 
     model_config = ConfigDict(from_attributes=True)
 

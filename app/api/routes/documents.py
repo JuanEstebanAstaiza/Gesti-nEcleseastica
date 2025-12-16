@@ -40,18 +40,6 @@ async def upload_document(
     return doc
 
 
-@router.get("", response_model=list[DocumentRead], dependencies=[Depends(require_admin)])
-async def list_documents(session=Depends(get_session)):
-    service = DocumentService(session)
-    return await service.list_all()
-
-
-@router.get("/me", response_model=list[DocumentRead])
-async def list_my_documents(session=Depends(get_session), current_user: User = Depends(get_current_user)):
-    service = DocumentService(session)
-    return await service.list_by_user(current_user.id)
-
-
 @router.get("/{doc_id}")
 async def download_document(
     doc_id: int,
@@ -73,4 +61,10 @@ async def download_document(
         raise HTTPException(status_code=404, detail="Archivo no encontrado en almacenamiento")
 
     return FileResponse(path, media_type=doc.mime_type, filename=doc.file_name)
+
+@router.get("", response_model=list[DocumentRead], dependencies=[Depends(require_admin)])
+async def list_documents(session=Depends(get_session)):
+    service = DocumentService(session)
+    return await service.list_all()
+
 

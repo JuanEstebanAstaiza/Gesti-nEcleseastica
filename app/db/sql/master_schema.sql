@@ -91,3 +91,17 @@ CREATE TABLE IF NOT EXISTS activity_logs (
 CREATE INDEX IF NOT EXISTS idx_activity_logs_tenant ON activity_logs(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_date ON activity_logs(created_at);
 
+-- =====================================================
+-- DATOS INICIALES
+-- =====================================================
+
+-- Super Admin (contraseña: superadmin123)
+INSERT INTO super_admins (email, hashed_password, full_name) VALUES
+('super@ekklesia.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4e0TdMJ.jx.12b/W', 'Super Administrador')
+ON CONFLICT (email) DO NOTHING;
+
+-- Tenant demo (Iglesia Comunidad de Fe)
+INSERT INTO tenants (slug, name, subdomain, db_name, plan_id) VALUES
+('comunidad-de-fe', 'Iglesia Comunidad de Fe', 'comunidadfe', 'ekklesia', 2)
+ON CONFLICT (slug) DO NOTHING;
+

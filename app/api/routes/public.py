@@ -11,14 +11,15 @@ from app.api.schemas.church import (
     PublicContentRead, AnnouncementRead
 )
 from app.api.schemas.event import EventRead
-from app.core.tenant import get_tenant_db, require_tenant, get_current_tenant
+from app.core.tenant import get_tenant_db, require_tenant
 
 router = APIRouter(prefix="/public", tags=["public"])
 
 
 @router.get("/config", response_model=ChurchPublicInfo)
 async def get_church_info(
-    session: AsyncSession = Depends(get_tenant_db)
+    session: AsyncSession = Depends(get_tenant_db),
+    tenant: dict = Depends(require_tenant)
 ):
     """Obtiene la información pública de la iglesia"""
     result = await session.execute(
@@ -36,7 +37,7 @@ async def get_church_info(
     if not config:
         # Retornar configuración por defecto
         return ChurchPublicInfo(
-            church_name="Mi Iglesia",
+            church_name=tenant.get("name", "Mi Iglesia"),
             slogan=None,
             description=None,
             about_us=None,
@@ -97,6 +98,7 @@ async def get_church_info(
 @router.get("/events", response_model=list[EventRead])
 async def get_public_events(
     session: AsyncSession = Depends(get_tenant_db),
+    tenant: dict = Depends(require_tenant),
     upcoming: bool = Query(True, description="Solo eventos futuros"),
     limit: int = Query(10, ge=1, le=50)
 ):
@@ -129,7 +131,8 @@ async def get_public_events(
 @router.get("/events/{event_id}", response_model=EventRead)
 async def get_public_event(
     event_id: int,
-    session: AsyncSession = Depends(get_tenant_db)
+    session: AsyncSession = Depends(get_tenant_db),
+    tenant: dict = Depends(require_tenant)
 ):
     """Obtiene detalle de un evento público"""
     result = await session.execute(
@@ -159,6 +162,7 @@ async def get_public_event(
 @router.get("/streams", response_model=list[LiveStreamRead])
 async def get_live_streams(
     session: AsyncSession = Depends(get_tenant_db),
+    tenant: dict = Depends(require_tenant),
     live_only: bool = Query(False, description="Solo transmisiones en vivo"),
     limit: int = Query(10, ge=1, le=50)
 ):
@@ -194,7 +198,8 @@ async def get_live_streams(
 
 @router.get("/streams/live", response_model=LiveStreamRead | None)
 async def get_current_live_stream(
-    session: AsyncSession = Depends(get_tenant_db)
+    session: AsyncSession = Depends(get_tenant_db),
+    tenant: dict = Depends(require_tenant)
 ):
     """Obtiene la transmisión en vivo actual (si existe)"""
     result = await session.execute(
@@ -232,7 +237,8 @@ async def get_current_live_stream(
 @router.get("/content/{slug}", response_model=PublicContentRead)
 async def get_public_content(
     slug: str,
-    session: AsyncSession = Depends(get_tenant_db)
+    session: AsyncSession = Depends(get_tenant_db),
+    tenant: dict = Depends(require_tenant)
 ):
     """Obtiene una página de contenido público por slug"""
     result = await session.execute(
@@ -271,6 +277,7 @@ async def get_public_content(
 @router.get("/announcements", response_model=list[AnnouncementRead])
 async def get_public_announcements(
     session: AsyncSession = Depends(get_tenant_db),
+    tenant: dict = Depends(require_tenant),
     limit: int = Query(5, ge=1, le=20)
 ):
     """Lista los anuncios públicos activos"""
@@ -306,7 +313,8 @@ async def get_public_announcements(
 
 @router.get("/donation-info")
 async def get_donation_info(
-    session: AsyncSession = Depends(get_tenant_db)
+    session: AsyncSession = Depends(get_tenant_db),
+    tenant: dict = Depends(require_tenant)
 ):
     """Obtiene la información de donaciones de la iglesia"""
     result = await session.execute(
@@ -319,7 +327,7 @@ async def get_donation_info(
     
     if not config:
         return {
-            "church_name": "Mi Iglesia",
+            "church_name": tenant.get("name", "Mi Iglesia"),
             "donation_info": None,
             "payment_methods": []
         }

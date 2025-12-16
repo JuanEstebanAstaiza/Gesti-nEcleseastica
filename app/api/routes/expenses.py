@@ -1,716 +1,451 @@
 """
-Rutas para el módulo de gastos
-CRUD completo para categorías, subcategorías, etiquetas, gastos y documentos
+Rutas de gestión de gastos - Solo para admins del tenant
 """
-import csv
-import io
-from datetime import date, datetime
-from decimal import Decimal
+from datetime import date
 from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form
-from fastapi.responses import StreamingResponse, FileResponse
-from sqlalchemy import select, func, extract
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from app.core.deps import get_current_user, require_admin
-from app.core.storage import save_file
-from app.db.session import get_session
-from app.models.expense import (
-    Expense,
-    ExpenseCategory,
-    ExpenseSubcategory,
-    ExpenseTag,
-    ExpenseDocument,
-    ExpenseFolder,
-)
-from app.api.schemas.expense import (
-    ExpenseCategoryCreate,
-    ExpenseCategoryUpdate,
-    ExpenseCategoryRead,
-    ExpenseSubcategoryCreate,
-    ExpenseSubcategoryRead,
-    ExpenseTagCreate,
-    ExpenseTagRead,
-    ExpenseCreate,
-    ExpenseUpdate,
-    ExpenseRead,
-    ExpenseDocumentRead,
-    ExpenseFolderCreate,
-    ExpenseFolderRead,
-    ExpenseReportRow,
-    ExpenseReportSummary,
-    ExpenseMonthlyReport,
-)
+from app.core.tenant import get_tenant_db
+from app.core.deps import require_admin, get_current_user
+from app.models.user import User
 
 router = APIRouter(prefix="/expenses", tags=["expenses"])
 
-MONTHS_ES = {
-    1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL",
-    5: "MAYO", 6: "JUNIO", 7: "JULIO", 8: "AGOSTO",
-    9: "SEPTIEMBRE", 10: "OCTUBRE", 11: "NOVIEMBRE", 12: "DICIEMBRE"
-}
+
+# ============== Schemas ==============
+
+class ExpenseCategoryCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    color: str = "#6b7280"
 
 
-# ==================== CATEGORÍAS ====================
+class ExpenseCategoryRead(BaseModel):
+    id: int
+    name: str
+    description: Optional[str]
+    color: str
+    is_active: bool
+
+
+class ExpenseCreate(BaseModel):
+    description: str
+    amount: float
+    category_id: Optional[int] = None
+    expense_date: date
+    due_date: Optional[date] = None
+    payment_method: Optional[str] = None
+    receipt_number: Optional[str] = None
+    vendor: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class ExpenseRead(BaseModel):
+    id: int
+    description: str
+    amount: float
+    category_id: Optional[int]
+    category_name: Optional[str] = None
+    expense_date: date
+    due_date: Optional[date]
+    status: str
+    payment_method: Optional[str]
+    receipt_number: Optional[str]
+    vendor: Optional[str]
+    notes: Optional[str]
+    created_by_id: Optional[int]
+    approved_by_id: Optional[int]
+    created_at: Optional[str]
+
+
+# ============== Categorías de Gastos ==============
 
 @router.get("/categories", response_model=list[ExpenseCategoryRead])
-async def list_categories(
-    include_inactive: bool = False,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(get_current_user),
+async def list_expense_categories(
+    session: AsyncSession = Depends(get_tenant_db),
+    current_user: User = Depends(require_admin)
 ):
     """Lista todas las categorías de gastos"""
-    query = select(ExpenseCategory).order_by(ExpenseCategory.sort_order)
-    if not include_inactive:
-        query = query.where(ExpenseCategory.is_active == True)
+    result = await session.execute(
+        text("SELECT id, name, description, color, is_active FROM expense_categories WHERE is_active = TRUE ORDER BY name")
+    )
+    categories = result.fetchall()
     
-    result = await session.execute(query)
-    return result.scalars().all()
+    return [ExpenseCategoryRead(
+        id=c.id,
+        name=c.name,
+        description=c.description,
+        color=c.color,
+        is_active=c.is_active
+    ) for c in categories]
 
 
-@router.post("/categories", response_model=ExpenseCategoryRead, status_code=201)
-async def create_category(
+@router.post("/categories", response_model=ExpenseCategoryRead, status_code=status.HTTP_201_CREATED)
+async def create_expense_category(
     data: ExpenseCategoryCreate,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(require_admin),
+    session: AsyncSession = Depends(get_tenant_db),
+    current_user: User = Depends(require_admin)
 ):
-    """Crea una nueva categoría de gasto"""
-    category = ExpenseCategory(**data.model_dump())
-    session.add(category)
-    await session.commit()
-    await session.refresh(category)
-    return category
-
-
-@router.patch("/categories/{category_id}", response_model=ExpenseCategoryRead)
-async def update_category(
-    category_id: int,
-    data: ExpenseCategoryUpdate,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(require_admin),
-):
-    """Actualiza una categoría"""
-    query = select(ExpenseCategory).where(ExpenseCategory.id == category_id)
-    result = await session.execute(query)
-    category = result.scalar_one_or_none()
-    
-    if not category:
-        raise HTTPException(404, "Categoría no encontrada")
-    
-    for key, value in data.model_dump(exclude_unset=True).items():
-        setattr(category, key, value)
-    
-    await session.commit()
-    await session.refresh(category)
-    return category
-
-
-@router.delete("/categories/{category_id}", status_code=204)
-async def delete_category(
-    category_id: int,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(require_admin),
-):
-    """Desactiva una categoría (soft delete)"""
-    query = select(ExpenseCategory).where(ExpenseCategory.id == category_id)
-    result = await session.execute(query)
-    category = result.scalar_one_or_none()
-    
-    if not category:
-        raise HTTPException(404, "Categoría no encontrada")
-    
-    category.is_active = False
-    await session.commit()
-
-
-# ==================== SUBCATEGORÍAS ====================
-
-@router.get("/categories/{category_id}/subcategories", response_model=list[ExpenseSubcategoryRead])
-async def list_subcategories(
-    category_id: int,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(get_current_user),
-):
-    """Lista subcategorías de una categoría"""
-    query = (
-        select(ExpenseSubcategory)
-        .where(
-            ExpenseSubcategory.category_id == category_id,
-            ExpenseSubcategory.is_active == True,
-        )
+    """Crea una nueva categoría de gastos"""
+    result = await session.execute(
+        text("""
+            INSERT INTO expense_categories (name, description, color)
+            VALUES (:name, :description, :color)
+            RETURNING id, name, description, color, is_active
+        """),
+        {"name": data.name, "description": data.description, "color": data.color}
     )
-    result = await session.execute(query)
-    return result.scalars().all()
-
-
-@router.post("/subcategories", response_model=ExpenseSubcategoryRead, status_code=201)
-async def create_subcategory(
-    data: ExpenseSubcategoryCreate,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(require_admin),
-):
-    """Crea una subcategoría"""
-    subcategory = ExpenseSubcategory(**data.model_dump())
-    session.add(subcategory)
+    category = result.fetchone()
     await session.commit()
-    await session.refresh(subcategory)
-    return subcategory
-
-
-# ==================== ETIQUETAS ====================
-
-@router.get("/tags", response_model=list[ExpenseTagRead])
-async def list_tags(
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(get_current_user),
-):
-    """Lista todas las etiquetas"""
-    query = select(ExpenseTag).order_by(ExpenseTag.name)
-    result = await session.execute(query)
-    return result.scalars().all()
-
-
-@router.post("/tags", response_model=ExpenseTagRead, status_code=201)
-async def create_tag(
-    data: ExpenseTagCreate,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(require_admin),
-):
-    """Crea una nueva etiqueta"""
-    # Verificar si ya existe
-    query = select(ExpenseTag).where(ExpenseTag.name == data.name)
-    result = await session.execute(query)
-    if result.scalar_one_or_none():
-        raise HTTPException(400, "Ya existe una etiqueta con ese nombre")
     
-    tag = ExpenseTag(**data.model_dump())
-    session.add(tag)
+    return ExpenseCategoryRead(
+        id=category.id,
+        name=category.name,
+        description=category.description,
+        color=category.color,
+        is_active=category.is_active
+    )
+
+
+@router.delete("/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_expense_category(
+    category_id: int,
+    session: AsyncSession = Depends(get_tenant_db),
+    current_user: User = Depends(require_admin)
+):
+    """Desactiva una categoría de gastos (soft delete)"""
+    await session.execute(
+        text("UPDATE expense_categories SET is_active = FALSE WHERE id = :id"),
+        {"id": category_id}
+    )
     await session.commit()
-    await session.refresh(tag)
-    return tag
+    return None
 
 
-@router.delete("/tags/{tag_id}", status_code=204)
-async def delete_tag(
-    tag_id: int,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(require_admin),
-):
-    """Elimina una etiqueta"""
-    query = select(ExpenseTag).where(ExpenseTag.id == tag_id)
-    result = await session.execute(query)
-    tag = result.scalar_one_or_none()
-    
-    if not tag:
-        raise HTTPException(404, "Etiqueta no encontrada")
-    
-    await session.delete(tag)
-    await session.commit()
+# ============== Gastos ==============
 
-
-# ==================== GASTOS ====================
-
-@router.get("/", response_model=list[ExpenseRead])
+@router.get("", response_model=list[ExpenseRead])
 async def list_expenses(
+    status_filter: Optional[str] = None,
     category_id: Optional[int] = None,
-    status: Optional[str] = None,
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-    limit: int = Query(default=50, le=200),
-    offset: int = 0,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_tenant_db),
+    current_user: User = Depends(require_admin)
 ):
-    """Lista gastos con filtros opcionales"""
-    query = (
-        select(Expense)
-        .options(
-            selectinload(Expense.category),
-            selectinload(Expense.subcategory),
-        )
-        .order_by(Expense.expense_date.desc(), Expense.id.desc())
-    )
+    """Lista todos los gastos con filtros opcionales"""
+    query = """
+        SELECT e.id, e.description, e.amount, e.category_id, c.name as category_name,
+               e.expense_date, e.due_date, e.status, e.payment_method, e.receipt_number,
+               e.vendor, e.notes, e.created_by_id, e.approved_by_id, e.created_at
+        FROM expenses e
+        LEFT JOIN expense_categories c ON e.category_id = c.id
+        WHERE 1=1
+    """
+    params = {}
+    
+    if status_filter:
+        query += " AND e.status = :status"
+        params["status"] = status_filter
     
     if category_id:
-        query = query.where(Expense.category_id == category_id)
-    if status:
-        query = query.where(Expense.status == status)
-    if start_date:
-        query = query.where(Expense.expense_date >= start_date)
-    if end_date:
-        query = query.where(Expense.expense_date <= end_date)
+        query += " AND e.category_id = :category_id"
+        params["category_id"] = category_id
     
-    query = query.limit(limit).offset(offset)
+    query += " ORDER BY e.expense_date DESC, e.created_at DESC"
     
-    result = await session.execute(query)
-    return result.scalars().all()
+    result = await session.execute(text(query), params)
+    expenses = result.fetchall()
+    
+    return [ExpenseRead(
+        id=e.id,
+        description=e.description,
+        amount=float(e.amount),
+        category_id=e.category_id,
+        category_name=e.category_name,
+        expense_date=e.expense_date,
+        due_date=e.due_date,
+        status=e.status,
+        payment_method=e.payment_method,
+        receipt_number=e.receipt_number,
+        vendor=e.vendor,
+        notes=e.notes,
+        created_by_id=e.created_by_id,
+        approved_by_id=e.approved_by_id,
+        created_at=e.created_at.isoformat() if e.created_at else None
+    ) for e in expenses]
+
+
+@router.post("", response_model=ExpenseRead, status_code=status.HTTP_201_CREATED)
+async def create_expense(
+    data: ExpenseCreate,
+    session: AsyncSession = Depends(get_tenant_db),
+    current_user: User = Depends(require_admin)
+):
+    """Crea un nuevo gasto"""
+    result = await session.execute(
+        text("""
+            INSERT INTO expenses (description, amount, category_id, expense_date, due_date,
+                payment_method, receipt_number, vendor, notes, created_by_id)
+            VALUES (:description, :amount, :category_id, :expense_date, :due_date,
+                :payment_method, :receipt_number, :vendor, :notes, :created_by_id)
+            RETURNING id, description, amount, category_id, expense_date, due_date,
+                status, payment_method, receipt_number, vendor, notes, created_by_id, 
+                approved_by_id, created_at
+        """),
+        {
+            "description": data.description,
+            "amount": data.amount,
+            "category_id": data.category_id,
+            "expense_date": data.expense_date,
+            "due_date": data.due_date,
+            "payment_method": data.payment_method,
+            "receipt_number": data.receipt_number,
+            "vendor": data.vendor,
+            "notes": data.notes,
+            "created_by_id": current_user.id
+        }
+    )
+    expense = result.fetchone()
+    await session.commit()
+    
+    return ExpenseRead(
+        id=expense.id,
+        description=expense.description,
+        amount=float(expense.amount),
+        category_id=expense.category_id,
+        category_name=None,
+        expense_date=expense.expense_date,
+        due_date=expense.due_date,
+        status=expense.status,
+        payment_method=expense.payment_method,
+        receipt_number=expense.receipt_number,
+        vendor=expense.vendor,
+        notes=expense.notes,
+        created_by_id=expense.created_by_id,
+        approved_by_id=expense.approved_by_id,
+        created_at=expense.created_at.isoformat() if expense.created_at else None
+    )
 
 
 @router.get("/{expense_id}", response_model=ExpenseRead)
 async def get_expense(
     expense_id: int,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_tenant_db),
+    current_user: User = Depends(require_admin)
 ):
     """Obtiene un gasto por ID"""
-    query = (
-        select(Expense)
-        .options(
-            selectinload(Expense.category),
-            selectinload(Expense.subcategory),
-        )
-        .where(Expense.id == expense_id)
+    result = await session.execute(
+        text("""
+            SELECT e.id, e.description, e.amount, e.category_id, c.name as category_name,
+                   e.expense_date, e.due_date, e.status, e.payment_method, e.receipt_number,
+                   e.vendor, e.notes, e.created_by_id, e.approved_by_id, e.created_at
+            FROM expenses e
+            LEFT JOIN expense_categories c ON e.category_id = c.id
+            WHERE e.id = :id
+        """),
+        {"id": expense_id}
     )
-    result = await session.execute(query)
-    expense = result.scalar_one_or_none()
+    expense = result.fetchone()
     
     if not expense:
-        raise HTTPException(404, "Gasto no encontrado")
+        raise HTTPException(status_code=404, detail="Gasto no encontrado")
     
-    return expense
-
-
-@router.post("/", response_model=ExpenseRead, status_code=201)
-async def create_expense(
-    data: ExpenseCreate,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(require_admin),
-):
-    """Crea un nuevo gasto"""
-    # Verificar que la categoría existe
-    query = select(ExpenseCategory).where(ExpenseCategory.id == data.category_id)
-    result = await session.execute(query)
-    if not result.scalar_one_or_none():
-        raise HTTPException(400, "Categoría no encontrada")
-    
-    expense = Expense(
-        **data.model_dump(),
-        created_by_id=current_user.id,
+    return ExpenseRead(
+        id=expense.id,
+        description=expense.description,
+        amount=float(expense.amount),
+        category_id=expense.category_id,
+        category_name=expense.category_name,
+        expense_date=expense.expense_date,
+        due_date=expense.due_date,
+        status=expense.status,
+        payment_method=expense.payment_method,
+        receipt_number=expense.receipt_number,
+        vendor=expense.vendor,
+        notes=expense.notes,
+        created_by_id=expense.created_by_id,
+        approved_by_id=expense.approved_by_id,
+        created_at=expense.created_at.isoformat() if expense.created_at else None
     )
-    session.add(expense)
-    await session.commit()
-    await session.refresh(expense)
-    
-    # Cargar relaciones
-    query = (
-        select(Expense)
-        .options(
-            selectinload(Expense.category),
-            selectinload(Expense.subcategory),
-        )
-        .where(Expense.id == expense.id)
-    )
-    result = await session.execute(query)
-    return result.scalar_one()
 
 
-@router.patch("/{expense_id}", response_model=ExpenseRead)
-async def update_expense(
-    expense_id: int,
-    data: ExpenseUpdate,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(require_admin),
-):
-    """Actualiza un gasto"""
-    query = select(Expense).where(Expense.id == expense_id)
-    result = await session.execute(query)
-    expense = result.scalar_one_or_none()
-    
-    if not expense:
-        raise HTTPException(404, "Gasto no encontrado")
-    
-    if expense.status == "paid":
-        raise HTTPException(400, "No se puede modificar un gasto ya pagado")
-    
-    for key, value in data.model_dump(exclude_unset=True).items():
-        setattr(expense, key, value)
-    
-    await session.commit()
-    
-    # Reload with relationships
-    query = (
-        select(Expense)
-        .options(
-            selectinload(Expense.category),
-            selectinload(Expense.subcategory),
-        )
-        .where(Expense.id == expense_id)
-    )
-    result = await session.execute(query)
-    return result.scalar_one()
-
-
-@router.post("/{expense_id}/approve", response_model=ExpenseRead)
+@router.patch("/{expense_id}/approve")
 async def approve_expense(
     expense_id: int,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(require_admin),
+    session: AsyncSession = Depends(get_tenant_db),
+    current_user: User = Depends(require_admin)
 ):
     """Aprueba un gasto pendiente"""
-    query = select(Expense).where(Expense.id == expense_id)
-    result = await session.execute(query)
-    expense = result.scalar_one_or_none()
-    
-    if not expense:
-        raise HTTPException(404, "Gasto no encontrado")
-    
-    if expense.status != "pending":
-        raise HTTPException(400, f"El gasto está en estado '{expense.status}', no se puede aprobar")
-    
-    expense.status = "approved"
-    expense.approved_by_id = current_user.id
-    expense.approved_at = datetime.utcnow()
-    
+    result = await session.execute(
+        text("""
+            UPDATE expenses 
+            SET status = 'approved', approved_by_id = :approved_by, approved_at = NOW()
+            WHERE id = :id AND status = 'pending'
+            RETURNING id
+        """),
+        {"id": expense_id, "approved_by": current_user.id}
+    )
+    row = result.fetchone()
     await session.commit()
     
-    # Reload with relationships
-    query = (
-        select(Expense)
-        .options(
-            selectinload(Expense.category),
-            selectinload(Expense.subcategory),
-        )
-        .where(Expense.id == expense_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Gasto no encontrado o ya procesado")
+    
+    return {"message": "Gasto aprobado", "id": expense_id}
+
+
+@router.patch("/{expense_id}/reject")
+async def reject_expense(
+    expense_id: int,
+    session: AsyncSession = Depends(get_tenant_db),
+    current_user: User = Depends(require_admin)
+):
+    """Rechaza un gasto pendiente"""
+    result = await session.execute(
+        text("""
+            UPDATE expenses 
+            SET status = 'rejected', approved_by_id = :approved_by, approved_at = NOW()
+            WHERE id = :id AND status = 'pending'
+            RETURNING id
+        """),
+        {"id": expense_id, "approved_by": current_user.id}
     )
-    result = await session.execute(query)
-    return result.scalar_one()
+    row = result.fetchone()
+    await session.commit()
+    
+    if not row:
+        raise HTTPException(status_code=404, detail="Gasto no encontrado o ya procesado")
+    
+    return {"message": "Gasto rechazado", "id": expense_id}
 
 
-@router.post("/{expense_id}/pay", response_model=ExpenseRead)
+@router.patch("/{expense_id}/pay")
 async def mark_expense_paid(
     expense_id: int,
-    payment_reference: Optional[str] = None,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(require_admin),
+    session: AsyncSession = Depends(get_tenant_db),
+    current_user: User = Depends(require_admin)
 ):
-    """Marca un gasto como pagado"""
-    query = select(Expense).where(Expense.id == expense_id)
-    result = await session.execute(query)
-    expense = result.scalar_one_or_none()
-    
-    if not expense:
-        raise HTTPException(404, "Gasto no encontrado")
-    
-    if expense.status not in ("pending", "approved"):
-        raise HTTPException(400, f"El gasto está en estado '{expense.status}'")
-    
-    expense.status = "paid"
-    if payment_reference:
-        expense.payment_reference = payment_reference
-    
+    """Marca un gasto aprobado como pagado"""
+    result = await session.execute(
+        text("""
+            UPDATE expenses 
+            SET status = 'paid', paid_at = NOW()
+            WHERE id = :id AND status = 'approved'
+            RETURNING id
+        """),
+        {"id": expense_id}
+    )
+    row = result.fetchone()
     await session.commit()
     
-    # Reload with relationships
-    query = (
-        select(Expense)
-        .options(
-            selectinload(Expense.category),
-            selectinload(Expense.subcategory),
-        )
-        .where(Expense.id == expense_id)
-    )
-    result = await session.execute(query)
-    return result.scalar_one()
+    if not row:
+        raise HTTPException(status_code=404, detail="Gasto no encontrado o no está aprobado")
+    
+    return {"message": "Gasto marcado como pagado", "id": expense_id}
 
 
-@router.delete("/{expense_id}", status_code=204)
-async def cancel_expense(
+@router.delete("/{expense_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_expense(
     expense_id: int,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(require_admin),
+    session: AsyncSession = Depends(get_tenant_db),
+    current_user: User = Depends(require_admin)
 ):
-    """Cancela un gasto (no lo elimina)"""
-    query = select(Expense).where(Expense.id == expense_id)
-    result = await session.execute(query)
-    expense = result.scalar_one_or_none()
-    
-    if not expense:
-        raise HTTPException(404, "Gasto no encontrado")
-    
-    if expense.status == "paid":
-        raise HTTPException(400, "No se puede cancelar un gasto ya pagado")
-    
-    expense.status = "cancelled"
+    """Elimina un gasto (solo si está pendiente)"""
+    result = await session.execute(
+        text("DELETE FROM expenses WHERE id = :id AND status = 'pending' RETURNING id"),
+        {"id": expense_id}
+    )
+    row = result.fetchone()
     await session.commit()
+    
+    if not row:
+        raise HTTPException(status_code=400, detail="Solo se pueden eliminar gastos pendientes")
+    
+    return None
 
 
-# ==================== DOCUMENTOS DE GASTOS ====================
+# ============== Resumen de Gastos ==============
 
-@router.get("/{expense_id}/documents", response_model=list[ExpenseDocumentRead])
-async def list_expense_documents(
-    expense_id: int,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(get_current_user),
+@router.get("/summary/by-category")
+async def get_expenses_by_category(
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    session: AsyncSession = Depends(get_tenant_db),
+    current_user: User = Depends(require_admin)
 ):
-    """Lista documentos de un gasto"""
-    query = select(ExpenseDocument).where(ExpenseDocument.expense_id == expense_id)
-    result = await session.execute(query)
-    return result.scalars().all()
+    """Obtiene resumen de gastos por categoría"""
+    query = """
+        SELECT c.name as category, c.color, SUM(e.amount) as total, COUNT(*) as count
+        FROM expenses e
+        LEFT JOIN expense_categories c ON e.category_id = c.id
+        WHERE e.status IN ('approved', 'paid')
+    """
+    params = {}
+    
+    if year:
+        query += " AND EXTRACT(YEAR FROM e.expense_date) = :year"
+        params["year"] = year
+    
+    if month:
+        query += " AND EXTRACT(MONTH FROM e.expense_date) = :month"
+        params["month"] = month
+    
+    query += " GROUP BY c.id, c.name, c.color ORDER BY total DESC"
+    
+    result = await session.execute(text(query), params)
+    rows = result.fetchall()
+    
+    return [
+        {
+            "category": r.category or "Sin categoría",
+            "color": r.color or "#6b7280",
+            "total": float(r.total) if r.total else 0,
+            "count": r.count
+        }
+        for r in rows
+    ]
 
 
-@router.post("/{expense_id}/documents", response_model=ExpenseDocumentRead, status_code=201)
-async def upload_expense_document(
-    expense_id: int,
-    file: UploadFile = File(...),
-    document_type: str = Form(default="invoice"),
-    description: str = Form(default=None),
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(require_admin),
+@router.get("/summary/monthly")
+async def get_monthly_expenses(
+    year: Optional[int] = None,
+    session: AsyncSession = Depends(get_tenant_db),
+    current_user: User = Depends(require_admin)
 ):
-    """Sube un documento de soporte para un gasto"""
-    # Verificar que el gasto existe
-    query = select(Expense).where(Expense.id == expense_id)
-    result = await session.execute(query)
-    if not result.scalar_one_or_none():
-        raise HTTPException(404, "Gasto no encontrado")
+    """Obtiene resumen mensual de gastos"""
+    from datetime import datetime
     
-    # Guardar archivo
-    content = await file.read()
-    stored_path, checksum = save_file(
-        content,
-        file.filename,
-        file.content_type,
-        subfolder=f"expenses/{expense_id}",
+    if not year:
+        year = datetime.now().year
+    
+    result = await session.execute(
+        text("""
+            SELECT EXTRACT(MONTH FROM expense_date) as month, 
+                   SUM(amount) as total, 
+                   COUNT(*) as count
+            FROM expenses
+            WHERE EXTRACT(YEAR FROM expense_date) = :year
+              AND status IN ('approved', 'paid')
+            GROUP BY EXTRACT(MONTH FROM expense_date)
+            ORDER BY month
+        """),
+        {"year": year}
     )
+    rows = result.fetchall()
     
-    doc = ExpenseDocument(
-        expense_id=expense_id,
-        file_name=file.filename,
-        stored_path=stored_path,
-        mime_type=file.content_type,
-        size_bytes=len(content),
-        checksum=checksum,
-        document_type=document_type,
-        description=description,
-        uploaded_by_id=current_user.id,
-    )
-    
-    session.add(doc)
-    await session.commit()
-    await session.refresh(doc)
-    return doc
-
-
-@router.get("/{expense_id}/documents/{doc_id}/download")
-async def download_expense_document(
-    expense_id: int,
-    doc_id: int,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(get_current_user),
-):
-    """Descarga un documento de gasto"""
-    query = select(ExpenseDocument).where(
-        ExpenseDocument.id == doc_id,
-        ExpenseDocument.expense_id == expense_id,
-    )
-    result = await session.execute(query)
-    doc = result.scalar_one_or_none()
-    
-    if not doc:
-        raise HTTPException(404, "Documento no encontrado")
-    
-    return FileResponse(
-        doc.stored_path,
-        media_type=doc.mime_type,
-        filename=doc.file_name,
-    )
-
-
-# ==================== CARPETAS ====================
-
-@router.get("/folders", response_model=list[ExpenseFolderRead])
-async def list_folders(
-    parent_id: Optional[int] = None,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(get_current_user),
-):
-    """Lista carpetas de gastos"""
-    query = select(ExpenseFolder).where(ExpenseFolder.is_active == True)
-    if parent_id:
-        query = query.where(ExpenseFolder.parent_id == parent_id)
-    else:
-        query = query.where(ExpenseFolder.parent_id == None)
-    
-    result = await session.execute(query)
-    return result.scalars().all()
-
-
-@router.post("/folders", response_model=ExpenseFolderRead, status_code=201)
-async def create_folder(
-    data: ExpenseFolderCreate,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(require_admin),
-):
-    """Crea una carpeta para organizar documentos"""
-    folder = ExpenseFolder(**data.model_dump())
-    session.add(folder)
-    await session.commit()
-    await session.refresh(folder)
-    return folder
-
-
-# ==================== REPORTES DE GASTOS ====================
-
-@router.get("/reports/monthly", response_model=ExpenseMonthlyReport)
-async def get_expense_monthly_report(
-    month: int = Query(..., ge=1, le=12),
-    year: int = Query(..., ge=2020, le=2100),
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(require_admin),
-):
-    """Reporte mensual de gastos"""
-    query = (
-        select(Expense)
-        .options(
-            selectinload(Expense.category),
-            selectinload(Expense.subcategory),
-        )
-        .where(
-            extract("month", Expense.expense_date) == month,
-            extract("year", Expense.expense_date) == year,
-            Expense.status != "cancelled",
-        )
-        .order_by(Expense.expense_date, Expense.id)
-    )
-    
-    result = await session.execute(query)
-    expenses = result.scalars().all()
-    
-    rows = []
-    total_gastos = Decimal("0")
-    por_categoria = {}
-    por_metodo = {}
-    presupuesto_usado = {}
-    
-    for e in expenses:
-        cat_name = e.category.name if e.category else "Sin categoría"
-        subcat_name = e.subcategory.name if e.subcategory else None
-        
-        rows.append(ExpenseReportRow(
-            fecha=e.expense_date.strftime("%d/%m/%Y"),
-            categoria=cat_name,
-            subcategoria=subcat_name,
-            descripcion=e.description,
-            proveedor=e.vendor_name,
-            metodo_pago=e.payment_method,
-            monto=e.amount,
-            estado=e.status,
-        ))
-        
-        total_gastos += e.amount
-        por_categoria[cat_name] = por_categoria.get(cat_name, Decimal("0")) + e.amount
-        por_metodo[e.payment_method] = por_metodo.get(e.payment_method, Decimal("0")) + e.amount
-        
-        # Calcular uso de presupuesto
-        if e.category and e.category.monthly_budget:
-            if cat_name not in presupuesto_usado:
-                presupuesto_usado[cat_name] = {
-                    "presupuesto": float(e.category.monthly_budget),
-                    "gastado": 0,
-                    "porcentaje": 0,
-                }
-            presupuesto_usado[cat_name]["gastado"] += float(e.amount)
-            presupuesto_usado[cat_name]["porcentaje"] = round(
-                (presupuesto_usado[cat_name]["gastado"] / presupuesto_usado[cat_name]["presupuesto"]) * 100, 2
-            )
-    
-    summary = ExpenseReportSummary(
-        total_gastos=total_gastos,
-        por_categoria=por_categoria,
-        por_metodo_pago=por_metodo,
-        cantidad_gastos=len(expenses),
-        presupuesto_usado=presupuesto_usado,
-    )
-    
-    return ExpenseMonthlyReport(
-        church_name="Iglesia Comunidad Cristiana de Fe",
-        month=month,
-        year=year,
-        period_label=f"{MONTHS_ES[month]} {year}",
-        expenses=rows,
-        summary=summary,
-    )
-
-
-@router.get("/reports/monthly/csv")
-async def export_expenses_csv(
-    month: int = Query(..., ge=1, le=12),
-    year: int = Query(..., ge=2020, le=2100),
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(require_admin),
-):
-    """Exporta reporte de gastos en CSV"""
-    report = await get_expense_monthly_report(month, year, session, current_user)
-    
-    output = io.StringIO()
-    writer = csv.writer(output)
-    
-    # Encabezado
-    writer.writerow([f"REPORTE DE GASTOS - {report.period_label}"])
-    writer.writerow([])
-    writer.writerow(["FECHA", "CATEGORÍA", "SUBCATEGORÍA", "DESCRIPCIÓN", "PROVEEDOR", "MÉTODO PAGO", "MONTO", "ESTADO"])
-    
-    for row in report.expenses:
-        writer.writerow([
-            row.fecha,
-            row.categoria,
-            row.subcategoria or "",
-            row.descripcion,
-            row.proveedor or "",
-            row.metodo_pago,
-            f"${row.monto:,.2f}",
-            row.estado,
-        ])
-    
-    writer.writerow([])
-    writer.writerow(["TOTAL GASTOS", "", "", "", "", "", f"${report.summary.total_gastos:,.2f}"])
-    
-    # Resumen por categoría
-    writer.writerow([])
-    writer.writerow(["RESUMEN POR CATEGORÍA"])
-    for cat, amount in report.summary.por_categoria.items():
-        writer.writerow([cat, f"${amount:,.2f}"])
-    
-    output.seek(0)
-    filename = f"gastos_{MONTHS_ES[month].lower()}_{year}.csv"
-    
-    return StreamingResponse(
-        iter([output.getvalue()]),
-        media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
-    )
-
-
-@router.get("/reports/summary")
-async def get_expense_summary(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-    session: AsyncSession = Depends(get_session),
-    current_user=Depends(require_admin),
-):
-    """Resumen de gastos para dashboard"""
-    query = select(Expense).where(Expense.status != "cancelled")
-    
-    if start_date:
-        query = query.where(Expense.expense_date >= start_date)
-    if end_date:
-        query = query.where(Expense.expense_date <= end_date)
-    
-    result = await session.execute(query)
-    expenses = result.scalars().all()
-    
-    total = sum(e.amount for e in expenses)
-    pending = sum(e.amount for e in expenses if e.status == "pending")
-    approved = sum(e.amount for e in expenses if e.status == "approved")
-    paid = sum(e.amount for e in expenses if e.status == "paid")
+    months = {int(r.month): {"total": float(r.total), "count": r.count} for r in rows}
     
     return {
-        "total": float(total),
-        "pending": float(pending),
-        "approved": float(approved),
-        "paid": float(paid),
-        "count": len(expenses),
+        "year": year,
+        "months": [
+            {
+                "month": i,
+                "total": months.get(i, {}).get("total", 0),
+                "count": months.get(i, {}).get("count", 0)
+            }
+            for i in range(1, 13)
+        ]
     }
 

@@ -21,28 +21,10 @@ router = APIRouter(prefix="/superadmin", tags=["superadmin"])
 
 # ============== Dependencias ==============
 
-# Cache del engine master
-_master_engine = None
-
-async def get_master_engine():
-    """Obtiene o crea el engine de la base de datos master"""
-    global _master_engine
-    if _master_engine is None:
-        from sqlalchemy.ext.asyncio import create_async_engine
-        from app.core.config import settings
-        _master_engine = create_async_engine(
-            str(settings.master_database_url), 
-            future=True, 
-            echo=False, 
-            pool_pre_ping=True
-        )
-    return _master_engine
-
-
 async def get_master_session():
     """Obtiene sesión de la base de datos master"""
     from sqlalchemy.ext.asyncio import async_sessionmaker
-    engine = await get_master_engine()
+    engine = await get_tenant_engine("ekklesia_master")
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
     session = session_factory()
     try:
@@ -154,9 +136,11 @@ async def create_tenant(
     """
     Crea un nuevo tenant (iglesia).
     - Registra en la base master
-    - Por ahora usa la DB compartida 'ekklesia' (en producción cada tenant tendría su propia DB)
+    - Crea la base de datos del tenant
+    - Aplica el esquema inicial
     """
     import re
+    from sqlalchemy import text as sql_text
     
     # Validar slug
     if not re.match(r'^[a-z0-9-]+$', data.slug):
@@ -173,8 +157,7 @@ async def create_tenant(
     if existing.fetchone():
         raise HTTPException(status_code=409, detail="Ya existe un tenant con ese slug")
     
-    # En modo desarrollo, todos los tenants usan la misma DB
-    db_name = "ekklesia"
+    db_name = f"ekk_{data.slug.replace('-', '_')}"
     
     # Crear registro del tenant
     result = await session.execute(
@@ -194,6 +177,56 @@ async def create_tenant(
     )
     tenant = result.fetchone()
     await session.commit()
+    
+    # Crear la base de datos para el tenant
+    try:
+        # Conexión al servidor PostgreSQL (no a una DB específica)
+        from sqlalchemy import create_engine
+        from app.core.config import settings
+        
+        # Usar conexión síncrona para crear DB
+        base_url = str(settings.database_url).replace("+asyncpg", "").replace("ekklesia", "postgres")
+        sync_engine = create_engine(base_url, isolation_level="AUTOCOMMIT")
+        
+        with sync_engine.connect() as conn:
+            conn.execute(sql_text(f"CREATE DATABASE {db_name}"))
+        
+        sync_engine.dispose()
+        
+        # Aplicar schema al nuevo tenant
+        tenant_url = get_tenant_db_url(db_name).replace("+asyncpg", "")
+        tenant_engine = create_engine(tenant_url)
+        
+        # Leer y ejecutar el schema SQL
+        import os
+        schema_path = os.path.join(os.path.dirname(__file__), "../../db/sql/tenant_schema.sql")
+        with open(schema_path) as f:
+            schema_sql = f.read()
+        
+        with tenant_engine.connect() as conn:
+            # Ejecutar cada statement por separado
+            for statement in schema_sql.split(";"):
+                statement = statement.strip()
+                if statement:
+                    try:
+                        conn.execute(sql_text(statement))
+                    except Exception:
+                        pass  # Ignorar errores de objetos existentes
+            conn.commit()
+        
+        tenant_engine.dispose()
+        
+    except Exception as e:
+        # Si falla la creación de DB, eliminar el registro
+        await session.execute(
+            text("DELETE FROM tenants WHERE id = :id"),
+            {"id": tenant.id}
+        )
+        await session.commit()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al crear la base de datos: {str(e)}"
+        )
     
     return TenantRead(
         id=tenant.id,
@@ -319,26 +352,26 @@ async def create_tenant_admin(
     if not tenant:
         raise HTTPException(status_code=404, detail="Tenant no encontrado")
     
-    # Crear usuario admin en la base del tenant (usando conexión async)
-    from app.core.tenant import get_tenant_session
+    # Crear usuario admin en la base del tenant
+    from sqlalchemy import create_engine
+    from sqlalchemy import text as sql_text
+    
+    tenant_url = get_tenant_db_url(tenant.db_name).replace("+asyncpg", "")
+    tenant_engine = create_engine(tenant_url)
     
     hashed_password = get_password_hash(data.password)
     
-    try:
-        tenant_session = await get_tenant_session(tenant.db_name)
-        try:
-            await tenant_session.execute(
-                text("""
-                    INSERT INTO users (email, hashed_password, full_name, role)
-                    VALUES (:email, :password, :name, 'admin')
-                """),
-                {"email": data.email, "password": hashed_password, "name": data.full_name}
-            )
-            await tenant_session.commit()
-        finally:
-            await tenant_session.close()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al crear usuario: {str(e)}")
+    with tenant_engine.connect() as conn:
+        conn.execute(
+            sql_text("""
+                INSERT INTO users (email, hashed_password, full_name, role)
+                VALUES (:email, :password, :name, 'admin')
+            """),
+            {"email": data.email, "password": hashed_password, "name": data.full_name}
+        )
+        conn.commit()
+    
+    tenant_engine.dispose()
     
     # Registrar referencia en master
     result = await session.execute(
@@ -414,88 +447,6 @@ async def get_platform_stats(
     )
 
 
-# ============== Monitoreo del Sistema ==============
-
-@router.get("/system/health")
-async def get_system_health(
-    current_admin = Depends(get_current_superadmin)
-):
-    """Obtiene estado de salud del sistema"""
-    import psutil
-    import os
-    
-    # CPU
-    cpu_percent = psutil.cpu_percent(interval=1)
-    cpu_count = psutil.cpu_count()
-    
-    # Memoria
-    memory = psutil.virtual_memory()
-    
-    # Disco
-    disk = psutil.disk_usage('/')
-    
-    # Procesos Python
-    process = psutil.Process(os.getpid())
-    
-    return {
-        "status": "healthy",
-        "cpu": {
-            "usage_percent": cpu_percent,
-            "cores": cpu_count,
-        },
-        "memory": {
-            "total_gb": round(memory.total / (1024**3), 2),
-            "used_gb": round(memory.used / (1024**3), 2),
-            "available_gb": round(memory.available / (1024**3), 2),
-            "usage_percent": memory.percent,
-        },
-        "disk": {
-            "total_gb": round(disk.total / (1024**3), 2),
-            "used_gb": round(disk.used / (1024**3), 2),
-            "free_gb": round(disk.free / (1024**3), 2),
-            "usage_percent": round((disk.used / disk.total) * 100, 1),
-        },
-        "process": {
-            "memory_mb": round(process.memory_info().rss / (1024**2), 2),
-            "cpu_percent": process.cpu_percent(),
-        }
-    }
-
-
-@router.get("/system/databases")
-async def get_databases_info(
-    session: AsyncSession = Depends(get_master_session),
-    current_admin = Depends(get_current_superadmin)
-):
-    """Lista todas las bases de datos y su tamaño"""
-    result = await session.execute(
-        text("""
-            SELECT t.id, t.slug, t.name, t.db_name, t.is_active, t.created_at
-            FROM tenants t
-            ORDER BY t.created_at DESC
-        """)
-    )
-    tenants = result.fetchall()
-    
-    databases = []
-    for t in tenants:
-        # Por ahora retornamos info básica
-        databases.append({
-            "tenant_id": t.id,
-            "tenant_slug": t.slug,
-            "tenant_name": t.name,
-            "db_name": t.db_name,
-            "is_active": t.is_active,
-            "created_at": t.created_at.isoformat() if t.created_at else None,
-            "size_mb": 0,  # TODO: Calcular tamaño real
-        })
-    
-    return {
-        "databases": databases,
-        "total_count": len(databases)
-    }
-
-
 # ============== Gestión de Backups ==============
 
 @router.get("/backups")
@@ -554,9 +505,6 @@ async def create_backup(
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_file = backup_dir / f"{tenant.slug}_{timestamp}.sql"
-    
-    # Obtener credenciales de la URL de la base de datos
-    db_url = str(settings.database_url)
     
     try:
         # Comando pg_dump - Host "db" es el nombre del servicio en docker-compose
@@ -632,7 +580,7 @@ async def download_backup(
     return FileResponse(backup_path, media_type="application/octet-stream", filename=filename)
 
 
-@router.post("/backups/upload")
+@router.post("/backups/upload-file")
 async def upload_backup(
     file: UploadFile = File(...),
     current_admin = Depends(get_current_superadmin)
@@ -641,7 +589,7 @@ async def upload_backup(
     import re
     from pathlib import Path
     
-    if not re.match(r'^[\w\-\.]+\.sql(\.gz)?$', file.filename):
+    if not file.filename or not re.match(r'^[\w\-\.]+\.sql(\.gz)?$', file.filename):
         raise HTTPException(status_code=400, detail="Nombre de archivo inválido")
     
     backup_dir = Path("./backups")
@@ -786,20 +734,35 @@ async def update_plan(
     }
 
 
-@router.delete("/plans/{plan_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/plans/{plan_id}")
 async def delete_plan(
     plan_id: int,
     session: AsyncSession = Depends(get_master_session),
     current_admin = Depends(get_current_superadmin)
 ):
-    """Desactiva un plan (soft delete)"""
+    """Elimina un plan permanentemente"""
+    # Verificar que no hay tenants usando este plan
     result = await session.execute(
-        text("UPDATE subscription_plans SET is_active = FALSE WHERE id = :id RETURNING id"),
+        text("SELECT COUNT(*) FROM tenants WHERE plan_id = :id"),
+        {"id": plan_id}
+    )
+    count = result.scalar()
+    
+    if count > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"No se puede eliminar: {count} iglesia(s) están usando este plan"
+        )
+    
+    result = await session.execute(
+        text("DELETE FROM subscription_plans WHERE id = :id RETURNING id"),
         {"id": plan_id}
     )
     row = result.fetchone()
     await session.commit()
+    
     if not row:
         raise HTTPException(status_code=404, detail="Plan no encontrado")
-    return {"message": "Plan desactivado", "id": plan_id}
+    
+    return {"message": "Plan eliminado permanentemente", "id": plan_id}
 

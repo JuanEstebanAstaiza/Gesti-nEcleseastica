@@ -22,3 +22,4 @@ class DocumentRepository:
     async def list_all(self) -> list[Document]:
         result = await self.session.execute(select(Document))
         return list(result.scalars().all())
+

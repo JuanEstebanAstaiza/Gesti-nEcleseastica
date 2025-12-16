@@ -10,7 +10,7 @@ from app.api.routes.ws import manager
 router = APIRouter(prefix="/donations", tags=["donations"])
 
 
-@router.post("", response_model=DonationRead, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin)])
+@router.post("", response_model=DonationRead, status_code=status.HTTP_201_CREATED)
 async def create_donation(
     payload: DonationCreate,
     session=Depends(get_session),
@@ -22,14 +22,15 @@ async def create_donation(
         {
             "type": "donation.created",
             "donation_id": donation.id,
-            "amount": float(donation.amount_total),
+            "amount": float(donation.amount),
+            "donation_type": donation.donation_type,
         }
     )
     return donation
 
 
-@router.get("", response_model=list[DonationRead])
-async def list_donations(session=Depends(get_session), current_user: User = Depends(get_current_user)):
+@router.get("", response_model=list[DonationRead], dependencies=[Depends(require_admin)])
+async def list_donations(session=Depends(get_session)):
     service = DonationService(session)
     return await service.list_for_admin()
 

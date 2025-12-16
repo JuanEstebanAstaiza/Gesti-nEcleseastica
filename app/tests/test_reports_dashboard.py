@@ -33,7 +33,7 @@ async def async_client():
 
 
 @pytest.mark.asyncio
-async def test_dashboard_by_month_and_payment_method(async_client: AsyncClient):
+async def test_dashboard_by_month_and_type(async_client: AsyncClient):
     admin = {"email": "admin@example.com", "password": "Admin123!", "full_name": "Admin", "role": "admin"}
     member = {"email": "member@example.com", "password": "Member123!", "full_name": "Member"}
     await async_client.post("/api/auth/register", json=admin)
@@ -50,42 +50,24 @@ async def test_dashboard_by_month_and_payment_method(async_client: AsyncClient):
     admin_headers = {"Authorization": f"Bearer {admin_token}"}
     member_headers = {"Authorization": f"Bearer {member_token}"}
 
-    # Nuevo formato de donaciones
     donations = [
-        {
-            "donor_name": "Donante 1",
-            "donor_document": "123",
-            "amount_tithe": 50.00,
-            "amount_offering": 0,
-            "amount_missions": 0,
-            "amount_special": 0,
-            "cash_amount": 50.00,  # Efectivo
-            "transfer_amount": 0,
-            "donation_date": "2025-01-01",
-            "note": "",
-            "is_anonymous": False,
-        },
-        {
-            "donor_name": "Donante 2",
-            "donor_document": "456",
-            "amount_tithe": 0,
-            "amount_offering": 30.00,
-            "amount_missions": 0,
-            "amount_special": 0,
-            "cash_amount": 0,
-            "transfer_amount": 30.00,  # Transferencia
-            "donation_date": "2025-02-01",
-            "note": "",
-            "is_anonymous": False,
-        },
+        {"donation_type": "diezmo", "amount": "50.00", "donation_date": "2025-01-01"},
+        {"donation_type": "ofrenda", "amount": "30.00", "donation_date": "2025-02-01"},
     ]
     for d in donations:
-        await async_client.post("/api/donations", json=d, headers=member_headers)
+        payload = {
+            "donor_name": "X",
+            "donor_document": "1",
+            "payment_method": "efectivo",
+            "note": "",
+            **d,
+        }
+        await async_client.post("/api/donations", json=payload, headers=member_headers)
 
     resp_dash = await async_client.get("/api/reports/dashboard", headers=admin_headers)
     assert resp_dash.status_code == 200
     data = resp_dash.json()
     assert "2025-01" in data["by_month"]
     assert "2025-02" in data["by_month"]
-    assert data["by_payment_method"]["efectivo"] == 50.0
-    assert data["by_payment_method"]["transferencia"] == 30.0
+    assert data["by_type"]["diezmo"]["count"] == 1
+    assert data["by_type"]["ofrenda"]["count"] == 1

@@ -3,9 +3,6 @@ FROM python:3.11-slim
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 
-# Instalar postgresql-client para backups
-RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /code
 
 COPY requirements.txt ./requirements.txt

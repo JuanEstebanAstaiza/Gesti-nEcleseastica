@@ -124,95 +124,27 @@ CREATE INDEX IF NOT EXISTS idx_events_dates ON events(start_date, end_date);
 CREATE INDEX IF NOT EXISTS idx_events_public ON events(is_public);
 
 -- =====================================================
--- DONACIONES (Formato actualizado con montos separados)
+-- DONACIONES
 -- =====================================================
 CREATE TABLE IF NOT EXISTS donations (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-    event_id INTEGER REFERENCES events(id),
-    
-    -- Datos del donante
     donor_name VARCHAR(255) NOT NULL,
     donor_document VARCHAR(50),
-    donor_address VARCHAR(500),
-    donor_phone VARCHAR(50),
-    donor_email VARCHAR(255),
-    
-    -- Montos separados por tipo
-    amount_tithe NUMERIC(12,2) DEFAULT 0,
-    amount_offering NUMERIC(12,2) DEFAULT 0,
-    amount_missions NUMERIC(12,2) DEFAULT 0,
-    amount_special NUMERIC(12,2) DEFAULT 0,
-    amount_total NUMERIC(12,2) NOT NULL,
-    
-    -- Método de pago
-    is_cash BOOLEAN DEFAULT TRUE,
-    is_transfer BOOLEAN DEFAULT FALSE,
-    payment_reference VARCHAR(100),
-    
-    -- Metadatos
+    donation_type donation_type NOT NULL,
+    user_id INTEGER REFERENCES users(id),
+    amount NUMERIC(12,2) NOT NULL,
+    payment_method payment_method NOT NULL,
     donation_date DATE NOT NULL,
-    week_number INTEGER,
-    envelope_number VARCHAR(50),
     note TEXT,
-    receipt_number VARCHAR(50) UNIQUE,
-    
-    -- Auditoría
+    event_id INTEGER REFERENCES events(id),
     is_anonymous BOOLEAN DEFAULT FALSE,
-    created_by_id INTEGER REFERENCES users(id),
+    receipt_number VARCHAR(50),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_donations_user ON donations(user_id);
 CREATE INDEX IF NOT EXISTS idx_donations_date ON donations(donation_date);
-CREATE INDEX IF NOT EXISTS idx_donations_week ON donations(week_number);
-
--- =====================================================
--- RESUMEN DE DONACIONES (Para reportes a contaduría)
--- =====================================================
-CREATE TABLE IF NOT EXISTS donation_summaries (
-    id SERIAL PRIMARY KEY,
-    summary_date DATE NOT NULL,
-    week_number INTEGER NOT NULL,
-    year INTEGER NOT NULL,
-    envelope_count INTEGER DEFAULT 0,
-    
-    -- Totales por tipo y método
-    tithe_cash NUMERIC(12,2) DEFAULT 0,
-    tithe_transfer NUMERIC(12,2) DEFAULT 0,
-    offering_cash NUMERIC(12,2) DEFAULT 0,
-    offering_transfer NUMERIC(12,2) DEFAULT 0,
-    missions_cash NUMERIC(12,2) DEFAULT 0,
-    missions_transfer NUMERIC(12,2) DEFAULT 0,
-    special_cash NUMERIC(12,2) DEFAULT 0,
-    special_transfer NUMERIC(12,2) DEFAULT 0,
-    
-    -- Totales generales
-    total_cash NUMERIC(12,2) DEFAULT 0,
-    total_transfer NUMERIC(12,2) DEFAULT 0,
-    grand_total NUMERIC(12,2) DEFAULT 0,
-    
-    -- Diezmo de diezmos
-    tithe_of_tithes NUMERIC(12,2) DEFAULT 0,
-    
-    -- Testigos
-    witness_1_name VARCHAR(255),
-    witness_1_document VARCHAR(50),
-    witness_2_name VARCHAR(255),
-    witness_2_document VARCHAR(50),
-    
-    -- Auditoría
-    created_by_id INTEGER REFERENCES users(id),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    is_closed BOOLEAN DEFAULT FALSE,
-    closed_at TIMESTAMPTZ,
-    notes TEXT,
-    
-    UNIQUE(year, week_number)
-);
-
-CREATE INDEX IF NOT EXISTS idx_summaries_date ON donation_summaries(summary_date);
-CREATE INDEX IF NOT EXISTS idx_summaries_week ON donation_summaries(year, week_number);
+CREATE INDEX IF NOT EXISTS idx_donations_type ON donations(donation_type);
 
 -- =====================================================
 -- DOCUMENTOS
@@ -374,155 +306,174 @@ CREATE TABLE IF NOT EXISTS expense_categories (
     name VARCHAR(100) NOT NULL,
     description TEXT,
     color VARCHAR(7) DEFAULT '#6b7280',
-    icon VARCHAR(50),
-    is_active BOOLEAN DEFAULT TRUE,
-    sort_order INTEGER DEFAULT 0,
-    monthly_budget NUMERIC(12,2),
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Categorías predeterminadas
-INSERT INTO expense_categories (name, description, color, icon, sort_order) VALUES
-('Servicios Públicos', 'Agua, luz, gas, internet, teléfono', '#3b82f6', 'ri-lightbulb-line', 1),
-('Arriendo', 'Alquiler del local o instalaciones', '#8b5cf6', 'ri-home-line', 2),
-('Salarios', 'Pagos a personal y colaboradores', '#22c55e', 'ri-user-line', 3),
-('Mantenimiento', 'Reparaciones y mantenimiento de instalaciones', '#f59e0b', 'ri-tools-line', 4),
-('Suministros', 'Materiales de oficina, limpieza, etc.', '#06b6d4', 'ri-shopping-bag-line', 5),
-('Eventos', 'Gastos relacionados con eventos especiales', '#ec4899', 'ri-calendar-event-line', 6),
-('Transporte', 'Combustible, pasajes, viáticos', '#84cc16', 'ri-car-line', 7),
-('Misiones', 'Apoyo a misiones y evangelismo', '#f97316', 'ri-earth-line', 8),
-('Otros', 'Gastos varios no clasificados', '#6b7280', 'ri-more-line', 99)
-ON CONFLICT DO NOTHING;
-
--- =====================================================
--- SUBCATEGORÍAS DE GASTOS
--- =====================================================
-CREATE TABLE IF NOT EXISTS expense_subcategories (
-    id SERIAL PRIMARY KEY,
-    category_id INTEGER NOT NULL REFERENCES expense_categories(id) ON DELETE CASCADE,
-    name VARCHAR(100) NOT NULL,
-    description TEXT,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_subcategories_category ON expense_subcategories(category_id);
-
--- Subcategorías predeterminadas
-INSERT INTO expense_subcategories (category_id, name) VALUES
-(1, 'Energía Eléctrica'),
-(1, 'Agua'),
-(1, 'Gas'),
-(1, 'Internet'),
-(1, 'Teléfono'),
-(3, 'Pastor'),
-(3, 'Secretaria'),
-(3, 'Personal de limpieza'),
-(4, 'Plomería'),
-(4, 'Electricidad'),
-(4, 'Pintura'),
-(4, 'Carpintería')
-ON CONFLICT DO NOTHING;
-
--- =====================================================
--- ETIQUETAS DE GASTOS
--- =====================================================
-CREATE TABLE IF NOT EXISTS expense_tags (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(50) UNIQUE NOT NULL,
-    color VARCHAR(7) DEFAULT '#3b82f6',
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-INSERT INTO expense_tags (name, color) VALUES
-('Urgente', '#ef4444'),
-('Recurrente', '#8b5cf6'),
-('Deducible', '#22c55e'),
-('Pendiente aprobación', '#f59e0b')
+-- Insertar categorías por defecto
+INSERT INTO expense_categories (name, description, color) VALUES 
+    ('Servicios', 'Agua, luz, internet, etc.', '#3b82f6'),
+    ('Mantenimiento', 'Reparaciones y mejoras del templo', '#f59e0b'),
+    ('Ministerios', 'Gastos de ministerios y grupos', '#10b981'),
+    ('Eventos', 'Gastos de eventos especiales', '#8b5cf6'),
+    ('Nómina', 'Salarios y honorarios', '#ef4444'),
+    ('Otros', 'Gastos varios', '#6b7280')
 ON CONFLICT DO NOTHING;
 
 -- =====================================================
 -- GASTOS
 -- =====================================================
+DO $$ BEGIN
+    CREATE TYPE expense_status AS ENUM ('pending', 'approved', 'paid', 'rejected');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
 CREATE TABLE IF NOT EXISTS expenses (
     id SERIAL PRIMARY KEY,
-    category_id INTEGER NOT NULL REFERENCES expense_categories(id),
-    subcategory_id INTEGER REFERENCES expense_subcategories(id),
-    
-    description VARCHAR(500) NOT NULL,
+    description VARCHAR(255) NOT NULL,
     amount NUMERIC(12,2) NOT NULL,
-    expense_date DATE NOT NULL,
-    
-    -- Proveedor
-    vendor_name VARCHAR(255),
-    vendor_document VARCHAR(50),
-    vendor_phone VARCHAR(50),
-    
-    -- Pago
-    payment_method VARCHAR(50) DEFAULT 'efectivo',
-    payment_reference VARCHAR(100),
-    bank_account VARCHAR(100),
-    
-    -- Documentos
-    invoice_number VARCHAR(50),
+    category_id INTEGER REFERENCES expense_categories(id),
+    expense_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    due_date DATE,
+    status expense_status DEFAULT 'pending',
+    payment_method payment_method,
     receipt_number VARCHAR(50),
-    
-    -- Estado
-    status VARCHAR(20) DEFAULT 'pending',
-    is_recurring BOOLEAN DEFAULT FALSE,
-    recurrence_period VARCHAR(20),
-    
-    tags JSONB,
+    vendor VARCHAR(255),
     notes TEXT,
-    
-    -- Auditoría
-    created_by_id INTEGER NOT NULL REFERENCES users(id),
+    document_id INTEGER REFERENCES documents(id),
+    created_by_id INTEGER REFERENCES users(id),
     approved_by_id INTEGER REFERENCES users(id),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    approved_at TIMESTAMPTZ
-);
-
-CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category_id);
-CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date);
-CREATE INDEX IF NOT EXISTS idx_expenses_status ON expenses(status);
-CREATE INDEX IF NOT EXISTS idx_expenses_created_by ON expenses(created_by_id);
-
--- =====================================================
--- DOCUMENTOS DE GASTOS
--- =====================================================
-CREATE TABLE IF NOT EXISTS expense_documents (
-    id SERIAL PRIMARY KEY,
-    expense_id INTEGER NOT NULL REFERENCES expenses(id) ON DELETE CASCADE,
-    
-    file_name VARCHAR(255) NOT NULL,
-    stored_path VARCHAR(500) NOT NULL,
-    mime_type VARCHAR(100) NOT NULL,
-    size_bytes INTEGER NOT NULL,
-    checksum VARCHAR(64),
-    
-    document_type VARCHAR(50) DEFAULT 'invoice',
-    description TEXT,
-    
-    uploaded_by_id INTEGER REFERENCES users(id),
-    uploaded_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_expense_docs_expense ON expense_documents(expense_id);
-
--- =====================================================
--- CARPETAS DE GASTOS
--- =====================================================
-CREATE TABLE IF NOT EXISTS expense_folders (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    description TEXT,
-    parent_id INTEGER REFERENCES expense_folders(id),
-    folder_type VARCHAR(50) DEFAULT 'general',
-    year INTEGER,
-    month INTEGER,
-    is_active BOOLEAN DEFAULT TRUE,
+    approved_at TIMESTAMPTZ,
+    paid_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_folders_parent ON expense_folders(parent_id);
+CREATE INDEX IF NOT EXISTS idx_expenses_status ON expenses(status);
+CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date);
+CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category_id);
+
+-- =====================================================
+-- RESÚMENES DE DONACIONES (para reportes)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS donation_summaries (
+    id SERIAL PRIMARY KEY,
+    period_type VARCHAR(20) NOT NULL, -- 'daily', 'weekly', 'monthly', 'yearly'
+    period_start DATE NOT NULL,
+    period_end DATE NOT NULL,
+    donation_type donation_type,
+    total_amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+    transaction_count INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(period_type, period_start, donation_type)
+);
+
+-- Carpetas para gastos (organización)
+CREATE TABLE IF NOT EXISTS expense_folders (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    parent_id INTEGER REFERENCES expense_folders(id),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Subcategorías de gastos
+CREATE TABLE IF NOT EXISTS expense_subcategories (
+    id SERIAL PRIMARY KEY,
+    category_id INTEGER REFERENCES expense_categories(id),
+    name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Etiquetas para gastos
+CREATE TABLE IF NOT EXISTS expense_tags (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    color VARCHAR(7) DEFAULT '#6b7280',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Documentos de gastos
+CREATE TABLE IF NOT EXISTS expense_documents (
+    id SERIAL PRIMARY KEY,
+    expense_id INTEGER REFERENCES expenses(id) ON DELETE CASCADE,
+    document_id INTEGER REFERENCES documents(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- =====================================================
+-- DATOS INICIALES
+-- =====================================================
+
+-- Configuración de la iglesia
+UPDATE church_config SET
+    church_name = 'Iglesia Comunidad de Fe',
+    slogan = 'Transformando vidas con el amor de Cristo',
+    description = 'Somos una comunidad de fe comprometida con el crecimiento espiritual y el servicio.',
+    about_us = 'La Iglesia Comunidad de Fe fue fundada en 1995 con la visión de crear un espacio donde las familias pudieran crecer juntas en fe y amor.',
+    mission = 'Proclamar el evangelio de Jesucristo, formar discípulos comprometidos y servir a nuestra comunidad.',
+    vision = 'Ser una iglesia que transforma vidas, familias y comunidades a través del poder del Espíritu Santo.',
+    address = 'Calle 45 #23-67, Barrio El Poblado',
+    city = 'Medellín',
+    country = 'Colombia',
+    phone = '+57 4 123 4567',
+    email = 'contacto@comunidadfe.org',
+    website = 'www.comunidadfe.org',
+    social_facebook = 'https://facebook.com/comunidadfe',
+    social_instagram = 'https://instagram.com/comunidadfe',
+    social_youtube = 'https://youtube.com/@comunidadfe',
+    donation_info = 'Tu generosidad permite que continuemos transformando vidas.',
+    bank_info = '{"banco": "Bancolombia", "numero": "123-456789-00", "titular": "Iglesia Comunidad de Fe", "tipo_cuenta": "Ahorros"}',
+    service_schedule = '[{"day": "Domingo", "name": "Escuela Dominical", "time": "09:00"}, {"day": "Domingo", "name": "Culto Principal", "time": "10:30"}, {"day": "Miércoles", "name": "Estudio Bíblico", "time": "19:00"}, {"day": "Viernes", "name": "Reunión de Jóvenes", "time": "19:30"}]'
+WHERE id = 1;
+
+-- Usuarios (Contraseña admin123 y member123)
+-- Hash bcrypt para "admin123": $2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4e0TdMJ.jx.12b/W
+-- Hash bcrypt para "member123": $2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi
+
+INSERT INTO users (email, hashed_password, full_name, role, phone) VALUES
+('admin@comunidadfe.org', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4e0TdMJ.jx.12b/W', 'Pastor Carlos Mendoza', 'admin', '+57 300 123 4567'),
+('tesorero@comunidadfe.org', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4e0TdMJ.jx.12b/W', 'María González', 'admin', '+57 300 234 5678'),
+('secretaria@comunidadfe.org', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4e0TdMJ.jx.12b/W', 'Ana Martínez', 'admin', '+57 300 345 6789'),
+('juan.perez@email.com', '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Juan Pérez', 'member', '+57 301 111 2222'),
+('maria.rodriguez@email.com', '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'María Rodríguez', 'member', '+57 301 222 3333'),
+('pedro.sanchez@email.com', '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Pedro Sánchez', 'member', '+57 301 333 4444'),
+('lucia.gomez@email.com', '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Lucía Gómez', 'member', '+57 301 444 5555'),
+('carlos.lopez@email.com', '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Carlos López', 'member', '+57 301 555 6666')
+ON CONFLICT (email) DO NOTHING;
+
+-- Eventos de ejemplo
+INSERT INTO events (name, description, start_date, end_date, location, capacity, is_public, created_by_id) VALUES
+('Culto Dominical', 'Servicio de adoración principal', CURRENT_DATE + INTERVAL '3 days', CURRENT_DATE + INTERVAL '3 days', 'Templo Principal', 500, true, 1),
+('Estudio Bíblico', 'Estudio del libro de Romanos', CURRENT_DATE + INTERVAL '5 days', CURRENT_DATE + INTERVAL '5 days', 'Salón 2', 50, true, 1),
+('Retiro de Jóvenes', 'Retiro espiritual para jóvenes', CURRENT_DATE + INTERVAL '14 days', CURRENT_DATE + INTERVAL '16 days', 'Finca El Refugio', 80, true, 1),
+('Conferencia de Mujeres', 'Encuentro especial para mujeres', CURRENT_DATE + INTERVAL '21 days', CURRENT_DATE + INTERVAL '21 days', 'Templo Principal', 300, true, 1),
+('Campaña Navideña', 'Celebración de Navidad', CURRENT_DATE + INTERVAL '30 days', CURRENT_DATE + INTERVAL '30 days', 'Templo Principal', 600, true, 1),
+('Reunión de Líderes', 'Planificación mensual', CURRENT_DATE + INTERVAL '7 days', CURRENT_DATE + INTERVAL '7 days', 'Oficina Pastoral', 20, false, 1)
+ON CONFLICT DO NOTHING;
+
+-- Anuncios de ejemplo
+INSERT INTO announcements (title, content, announcement_type, priority, is_public, is_active, created_by_id) VALUES
+('Inscripciones Retiro de Jóvenes', 'Ya están abiertas las inscripciones para el retiro de jóvenes. Cupos limitados.', 'evento', 10, true, true, 1),
+('Horario Especial Navidad', 'Durante diciembre tendremos horarios especiales de servicio.', 'general', 8, true, true, 1),
+('Campaña de Alimentos', 'Estamos recolectando alimentos para familias necesitadas.', 'general', 7, true, true, 1),
+('Nuevos Grupos de Estudio', 'Se abren nuevas células de estudio bíblico en diferentes zonas.', 'general', 5, true, true, 1),
+('Reunión de Líderes', 'Recordatorio: reunión de líderes este sábado a las 9am.', 'interno', 3, false, true, 1)
+ON CONFLICT DO NOTHING;
+
+-- Donaciones de ejemplo
+INSERT INTO donations (donor_name, donation_type, user_id, amount, payment_method, donation_date, note) VALUES
+('Juan Pérez', 'diezmo', 4, 150000, 'transferencia', CURRENT_DATE - INTERVAL '5 days', 'Diezmo del mes'),
+('María Rodríguez', 'ofrenda', 5, 50000, 'efectivo', CURRENT_DATE - INTERVAL '3 days', 'Ofrenda dominical'),
+('Pedro Sánchez', 'diezmo', 6, 200000, 'transferencia', CURRENT_DATE - INTERVAL '7 days', 'Diezmo mensual'),
+('Anónimo', 'misiones', NULL, 100000, 'efectivo', CURRENT_DATE - INTERVAL '1 day', 'Para misiones'),
+('Lucía Gómez', 'especial', 7, 300000, 'transferencia', CURRENT_DATE - INTERVAL '2 days', 'Ofrenda especial navidad')
+ON CONFLICT DO NOTHING;
+
+-- Gastos de ejemplo
+INSERT INTO expenses (description, amount, category_id, expense_date, status, vendor, created_by_id) VALUES
+('Servicio de luz - Noviembre', 250000, 1, CURRENT_DATE - INTERVAL '10 days', 'paid', 'EPM', 1),
+('Mantenimiento aire acondicionado', 180000, 2, CURRENT_DATE - INTERVAL '5 days', 'approved', 'TecniAire', 1),
+('Materiales escuela dominical', 75000, 3, CURRENT_DATE - INTERVAL '3 days', 'pending', 'Librería Cristiana', 1),
+('Decoración navideña', 120000, 4, CURRENT_DATE - INTERVAL '1 day', 'pending', 'Decoraciones Bogotá', 1)
+ON CONFLICT DO NOTHING;
 

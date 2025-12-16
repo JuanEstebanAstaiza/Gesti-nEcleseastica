@@ -51,15 +51,11 @@ async def test_member_can_create_and_view_own_donations_but_not_list_all(async_c
     donation_payload = {
         "donor_name": "Juan",
         "donor_document": "123",
-        "amount_tithe": 100.00,
-        "amount_offering": 50.00,
-        "amount_missions": 0,
-        "amount_special": 0,
-        "cash_amount": 150.00,
-        "transfer_amount": 0,
-        "donation_date": "2025-01-01",
+        "donation_type": "diezmo",
+        "amount": "100.00",
+        "payment_method": "efectivo",
         "note": "Test",
-        "is_anonymous": False,
+        "donation_date": "2025-01-01",
     }
     resp_create = await async_client.post("/api/donations", json=donation_payload, headers=member_headers)
     assert resp_create.status_code == 201
